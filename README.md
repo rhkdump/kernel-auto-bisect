@@ -1,16 +1,15 @@
 # KAB - Kernel Auto-bisect
 
-KAB is an automated git bisect tool to locate the first bad commit or kernel version. It aims at bisecting kernel issues.
+KAB is an automated git bisect tool to locate the first bad kernel commit/build. Once deployed in the device under test (DUT), it will automatically build kernel or download built kernel packages, install the kernel, reboot to the new kernel and test the kernel until the first bad kernel is found.
 
 ## Quick start
-
 
 ### Source bisecting
 
 Take [2123230 – kdump cannot save core file when boot system with "nr_cpus=2"](https://bugzilla.redhat.com/show_bug.cgi?id=2123230) as an example, the initial good and bad commits are d2c104a3426be9991b35c65f0f260a107c4b2942 and v5.4-rc1 respectively.
 
 1. Clone this repository and install KAB with command `make install`
-2. Edit /etc/kernel-auto-bsiect.conf
+2. Edit /etc/kernel-auto-bisect.conf
 ```
 BISECT_WHAT=SOURCE
 KERNEL_SRC_REPO https://github.com/torvalds/linux.git
@@ -61,11 +60,11 @@ Feb 22 05:22:11 - report sent
 Feb 22 05:22:11 - kab service disabled
 Feb 22 05:22:11 - stopped
 ```
-### Version bisecting
+### Build bisecting
 
-You can also bisect built kernel packages by specifying `BISECT_WAHT` and `DISTRIBUTION` in /etc/kernel-auto-bsiect.conf,
+You can also bisect built kernel packages by specifying `BISECT_WHAT` and `DISTRIBUTION` in /etc/kernel-auto-bisect.conf,
 ```
-BISECT_WHAT VERSION
+BISECT_WHAT BUILD
 DISTRIBUTION RHEL9
 REPRODUCER /root/reproduce.sh
 ```
@@ -83,7 +82,7 @@ esmtp should be configured properly if you want to receive report via email. An 
 
 
 ### How to stop KAB?
-After this script find the first bad commit, it will stop automatically.
+After KAB finds the first bad commit/build, it will stop automatically.
 
 To stop the process manually, you should log in the system and disable the service called kernel-auto-bisect:
 

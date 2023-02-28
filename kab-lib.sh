@@ -27,8 +27,8 @@ check_config() {
 		eval "$config_opt"="$config_val"
 	done <<<"$(read_conf)"
 
-	if [[ $BISECT_WHAT != VERSION && $BISECT_WHAT != SOURCE ]]; then
-		echo BISECT_WHAT must be chosen between SOURCE and VERSION
+	if [[ $BISECT_WHAT != BUILD && $BISECT_WHAT != SOURCE ]]; then
+		echo BISECT_WHAT must be chosen between SOURCE and BUILD
 		exit 1
 	fi
 
@@ -49,6 +49,7 @@ check_config() {
 		exit 1
 	fi
 
+	# shellcheck disable=SC1090
 	source "$REPRODUCER"
 }
 
@@ -60,9 +61,10 @@ safe_cd() {
 }
 
 LOG() {
-	echo "$(date "+%b %d %H:%M:%S") - $@" >>"${LOG_PATH}"
-	if [ ! -z "${LOG_HOST}" ]; then
-		ssh root@"${LOG_HOST}" "echo "$(date +%b%d:%H:%M:%S) - $@">> ${REMOTE_LOG_PATH}"
+	echo "$(date "+%b %d %H:%M:%S") - $*" >>"${LOG_PATH}"
+	if [ -n "${LOG_HOST}" ]; then
+		# shellcheck disable=SC2029
+		ssh root@"${LOG_HOST}" "echo $(date +%b%d:%H:%M:%S) - $* >> ${REMOTE_LOG_PATH}"
 	fi
 }
 
@@ -123,16 +125,16 @@ call_func() {
 
 initiate() {
 	if [ -e "/boot/.kernel-auto-bisect.undergo" ]; then
-		echo '''
+		echo '
         
 There might be another operation undergoing, delete any file named
 '.kernel-auto-bisect.*' in /boot directory and run this script again.
 
-'''
+'
 		exit 1
 	fi
 
-	if [[ $BISECT_WHAT == VERSION ]]; then
+	if [[ $BISECT_WHAT == BUILD ]]; then
 		dnf install wget python -qy
 		safe_cd "$KAB_WD"
 		python /usr/bin/generate_rhel_kernel_rpm_list.py "$DISTRIBUTION" "$(uname -m)" >"$KERNEL_RPM_LIST"
@@ -147,7 +149,7 @@ There might be another operation undergoing, delete any file named
 		_bad_commit=$2
 
 		if is_git_repo $KERNEL_SRC_PATH; then
-			read -p "$KERNEL_SRC_PATH exists, do you want to reuse it? y/n" ans
+			read -r -p "$KERNEL_SRC_PATH exists, do you want to reuse it? y/n " ans
 			if [ "$ans" == "n" ]; then
 				rm -rf "$KERNEL_SRC_PATH"
 			fi
@@ -161,7 +163,7 @@ There might be another operation undergoing, delete any file named
 		safe_cd "$KERNEL_SRC_PATH"
 
 		# only build kernel modules that are in-use or included in initramfs
-		lsinitrd /boot/initramfs-$(uname -r).img | sed -n -E "s/.*\/(\w+).ko.xz/\1/p" | xargs -n 1 modprobe
+		lsinitrd "/boot/initramfs-$(uname -r).img" | sed -n -E "s/.*\/(\w+).ko.xz/\1/p" | xargs -n 1 modprobe
 
 		yes '' | make localmodconfig
 		sed -i "/rhel.pem/d" .config
@@ -198,7 +200,7 @@ compile_install_kernel() {
 	LOG building kernel: "${CURRENT_COMMIT}"
 
 	./scripts/config --set-str CONFIG_LOCALVERSION -"${CURRENT_COMMIT}"
-	yes $'\n' | make -j$(grep '^processor' /proc/cpuinfo | wc -l)
+	yes $'\n' | make -j"$(grep -c '^processor' /proc/cpuinfo)"
 	if ! make modules_install -j || ! make install; then
 		LOG "failed to build kernel"
 		exit
@@ -206,7 +208,7 @@ compile_install_kernel() {
 
 	LOG kernel building complete
 	# notice that next reboot should use new kernel
-	grubby --set-default /boot/vmlinuz-$(uname -r)
+	grubby --set-default "/boot/vmlinuz-$(uname -r)"
 	krelease=$(make kernelrelease)
 	reboot_to_kernel_once "$krelease"
 }
@@ -230,8 +232,9 @@ get_default_kernel() {
 
 install_kernel_rpm() {
 	# dnf will make the newly installed kernel as default boot entry
-	local _default_kernel=$(get_default_kernel)
+	local _default_kernel
 
+	_default_kernel=$(get_default_kernel)
 	kernel_release=$(<kernel_release)
 	url=$(<kernel_url)
 	url_module=$(sed -En "s/kernel-core/kernel-modules/p" <<<"$url")
@@ -251,7 +254,7 @@ install_kernel_rpm() {
 install_kernel() {
 	if [[ $BISECT_WHAT == SOURCE ]]; then
 		compile_install_kernel
-	elif [[ $BISECT_WHAT == VERSION ]]; then
+	elif [[ $BISECT_WHAT == BUILD ]]; then
 		install_kernel_rpm
 	fi
 }
@@ -266,7 +269,7 @@ remove_kernel_rpm() {
 cleanup_kernel() {
 	local _kernel_release=$1
 
-	if [[ $BISECT_WHAT == VERSION ]]; then
+	if [[ $BISECT_WHAT == BUILD ]]; then
 		remove_kernel_rpm "$_kernel_release"
 	else
 		/usr/bin/kernel-install remove "$_kernel_release"
@@ -296,9 +299,7 @@ clean_reboot_status() {
 }
 
 set_reboot_status() {
-	local _release=$(get_kernel_release)
-
-	if [[ $(uname -r) == $_release ]]; then
+	if [[ $(uname -r) == "$(get_kernel_release)" ]]; then
 		touch $REBOOT_SUCCESS_FILE
 	fi
 }
@@ -306,7 +307,9 @@ set_reboot_status() {
 success_string=''
 detect_good_bad() {
 	local _result=BAD
-	local _old_kernel_release=$(get_kernel_release)
+	local _old_kernel_release
+
+	_old_kernel_release=$(get_kernel_release)
 
 	if is_reboot_successful; then
 		clean_reboot_status
@@ -345,10 +348,34 @@ can_we_stop() {
 	fi
 }
 
+# Make sure GRUB EFI can be started automatically
+#
+# IA-64 needs nextboot set and some ARM machines starts EFI Shell first which
+# only exits with manual console access
+#
+# Code adapted from
+# https://gitlab.com/redhat/centos-stream/tests/kernel/kernel-tests/-/blob/main/kdump/include/lib.sh#L501
+prepare_reboot() {
+	if [ -e "/usr/sbin/efibootmgr" ]; then
+		EFI=$(efibootmgr -v | grep BootCurrent | awk '{ print $2}')
+		if [ -n "$EFI" ]; then
+			LOG "Updating efibootmgr next boot option to $EFI according to BootCurrent"
+			efibootmgr -n "$EFI"
+		elif [[ -z "$EFI" && -f /root/EFI_BOOT_ENTRY.TXT ]]; then
+			os_boot_entry=$(</root/EFI_BOOT_ENTRY.TXT)
+			LOG "Updating efibootmgr next boot option to $os_boot_entry according to EFI_BOOT_ENTRY.TXT"
+			efibootmgr -n "$os_boot_entry"
+		else
+			LOG "Could not determine value for BootNext!"
+		fi
+	fi
+}
+
 try_reboot_to_new_kernel() {
 	# real test happens after reboot
 	LOG rebooting
 	set_try_reboot_indicator
+	prepare_reboot
 	sync
 	reboot
 }
@@ -403,7 +430,7 @@ try_panic_kernel() {
 get_kernel_release() {
 	local _release
 
-	if [[ $(pwd) != $KERNEL_SRC_PATH ]]; then
+	if [[ $(pwd) != "$KERNEL_SRC_PATH" ]]; then
 		LOG "get_kernel_release should have $KERNEL_SRC_PATH as PWD, abort!"
 		exit 1
 	fi

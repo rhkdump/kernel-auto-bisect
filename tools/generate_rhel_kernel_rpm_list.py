@@ -36,7 +36,7 @@ else:
 
 version_map = {"RHEL8": "4.18.0", "RHEL9": "5.14.0", "C9S": "5.14.0"}
 version = version_map[rhel_version]
-if rhel_version == "C9s":
+if rhel_version == "C9S":
     base_url = f"https://kojihub.stream.centos.org/kojifiles/packages/kernel/5.14.0/"
 else:
     rhel_version=rhel_version[-1]
