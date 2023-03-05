@@ -163,7 +163,7 @@ There might be another operation undergoing, delete any file named
 		safe_cd "$KERNEL_SRC_PATH"
 
 		# only build kernel modules that are in-use or included in initramfs
-		lsinitrd "/boot/initramfs-$(uname -r).img" | sed -n -E "s/.*\/(\w+).ko.xz/\1/p" | xargs -n 1 modprobe
+		lsinitrd "/boot/initramfs-$(uname -r).img" | sed -n -E "s/.*\/([a-zA-Z0-9_-]+).ko.xz/\1/p" | xargs -n 1 modprobe
 
 		yes '' | make localmodconfig
 		sed -i "/rhel.pem/d" .config
