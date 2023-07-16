@@ -176,6 +176,9 @@ There might be another operation undergoing, delete any file named
 		yes '' | make localmodconfig
 		sed -i "/rhel.pem/d" .config
 
+		# To avoid builidng bloated kernel image and modules, disable DEBUG_INFO_DWARF_TOOLCHAIN_DEFAULT to auto-disable CONFIG_DEBUG_INFO
+		./scripts/config -d DEBUG_INFO_DWARF_TOOLCHAIN_DEFAULT
+
 	fi
 
 	LOG starting kab
