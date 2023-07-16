@@ -11,7 +11,7 @@ Take [2123230 – kdump cannot save core file when boot system with "nr_cpus=2"]
 1. Clone this repository and install KAB with command `make install`
 2. Edit /etc/kernel-auto-bisect.conf
 ```
-BISECT_WHAT=SOURCE
+BISECT_WHAT SOURCE
 KERNEL_SRC_REPO https://github.com/torvalds/linux.git
 REPRODUCER /root/kdump-reproducer.sh
 
@@ -27,7 +27,7 @@ before_bisect() {
 }
 
 on_test() {
-        if [ $(ls /var/crash | wc -l) -ne 0 ]; then
+        if [ $(ls /var/crash/*/vmcore 2>/dev/null | wc -l) -ne 0 ]; then
                 rm -rf /var/crash/*
                 return 0
         else
