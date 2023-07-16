@@ -114,7 +114,7 @@ generate_git_repo_from_package_list() {
 
 # install packages needed for kernel development
 install_kernel_devel() {
-	dnf --setopt=install_weak_deps=False install audit-libs-devel binutils-devel clang dwarves llvm perl python3-devel elfutils-devel java-devel ncurses-devel newt-devel numactl-devel pciutils-devel perl-generators xz-devel xmlto bison openssl-devel bc openssl gcc-plugin-devel cpio xz tar git -qy
+	dnf --setopt=install_weak_deps=False install audit-libs-devel binutils-devel clang dwarves llvm perl python3-devel elfutils-devel java-devel ncurses-devel newt-devel numactl-devel pciutils-devel perl-generators xz-devel xmlto bison openssl-devel bc openssl cpio xz tar -qy
 }
 
 # Only call a function if it's defined
@@ -132,6 +132,10 @@ There might be another operation undergoing, delete any file named
 
 '
 		exit 1
+	fi
+
+	if ! dnf install git -yq; then
+		echo "Failed to install git, abort!"
 	fi
 
 	if [[ $BISECT_WHAT == BUILD ]]; then
@@ -162,13 +166,16 @@ There might be another operation undergoing, delete any file named
 
 		safe_cd "$KERNEL_SRC_PATH"
 
+		if ! install_kernel_devel; then
+			echo "Failed to install the packages for building kernel, abort"
+		fi
+
 		# only build kernel modules that are in-use or included in initramfs
 		lsinitrd "/boot/initramfs-$(uname -r).img" | sed -n -E "s/.*\/([a-zA-Z0-9_-]+).ko.xz/\1/p" | xargs -n 1 modprobe
 
 		yes '' | make localmodconfig
 		sed -i "/rhel.pem/d" .config
 
-		install_kernel_devel
 	fi
 
 	LOG starting kab
