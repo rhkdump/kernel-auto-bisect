@@ -44,6 +44,11 @@ check_config() {
 		fi
 	fi
 
+	if [[ -z $REPRODUCER ]]; then
+		echo "You need to set the path of the reproducer first."
+		exit
+	fi
+
 	if [[ ! -e $REPRODUCER ]]; then
 		echo "$REPRODUCER doesn't exist."
 		exit 1
