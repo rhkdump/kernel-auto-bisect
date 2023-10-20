@@ -326,9 +326,11 @@ detect_good_bad() {
 	if is_reboot_successful; then
 		clean_reboot_status
 
+		pushd "$PWD"
 		if on_test; then
 			_result=GOOD
 		fi
+		popd
 	else
 		if [[ $BAD_IF_FAILED_TO_REBOOT == NO ]]; then
 			LOG "Booted kernel is not the new kernel, abort!"
