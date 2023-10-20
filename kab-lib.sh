@@ -247,18 +247,20 @@ install_kernel_rpm() {
 	_default_kernel=$(get_default_kernel)
 	kernel_release=$(<kernel_release)
 	url=$(<kernel_url)
-	url_module=$(sed -En "s/kernel-core/kernel-modules/p" <<<"$url")
-	_dest=$KERNEL_RPMS_DIR/kernel-core-${kernel_release}.rpm
-	_dest_module=$KERNEL_RPMS_DIR/kernel-modules-${kernel_release}.rpm
-	wget -c "$url" -O "$_dest"
-	wget -c "$url_module" -O "$_dest_module"
+	for name in kernel kernel-core kernel-modules kernel-modules-core; do
+		url_dl=$(sed -En "s/kernel-core/$name/p" <<<"$url")
+		wget -c "$url_dl" -P "$KERNEL_RPMS_DIR"
+	done
 
-	dnf install "$_dest" "$_dest_module" -qy
-
-	# restore the default boot entry
-	grubby --set-default "$_default_kernel"
-	reboot_to_kernel_once "$kernel_release"
-	LOG kernel rpm "$_dest" installation complete
+	if dnf install $KERNEL_RPMS_DIR/kernel-*${kernel_release}.rpm -qy; then
+		# restore the default boot entry
+		grubby --set-default "$_default_kernel"
+		reboot_to_kernel_once "$kernel_release"
+		LOG "Installed kernel $kernel_release successfully"
+	else
+		LOG "Failed to install kernel $kernel_release"
+		exit 1
+	fi
 }
 
 install_kernel() {
@@ -272,7 +274,7 @@ install_kernel() {
 remove_kernel_rpm() {
 	# Current running kernel is marked as protected and dnf won't remove it.
 	# So use rpm instead.
-	rpm -e "kernel-core-$1" "kernel-modules-$1"
+	rpm -e "kernel-core-$1" "kernel-modules-$1" "kernel-modules-core-$1" "kernel-$1"
 }
 
 # clean up old kernel to prevent
