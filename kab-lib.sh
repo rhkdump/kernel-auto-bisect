@@ -138,6 +138,8 @@ There might be another operation undergoing, delete any file named
 		echo "Failed to install git, abort!"
 	fi
 
+	[ ! -d $KAB_WD ] && mkdir -p "$KAB_WD"
+
 	if [[ $BISECT_WHAT == BUILD ]]; then
 		dnf install wget python -qy
 		safe_cd "$KAB_WD"
