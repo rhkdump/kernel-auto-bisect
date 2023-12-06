@@ -119,7 +119,7 @@ generate_git_repo_from_package_list() {
 
 # install packages needed for kernel development
 install_kernel_devel() {
-	dnf --setopt=install_weak_deps=False install audit-libs-devel binutils-devel clang dwarves llvm perl python3-devel elfutils-devel java-devel ncurses-devel newt-devel numactl-devel pciutils-devel perl-generators xz-devel xmlto bison openssl-devel bc openssl cpio xz tar -qy
+	dnf --setopt=install_weak_deps=False install audit-libs-devel binutils-devel clang dwarves llvm perl python3-devel elfutils-devel java-devel ncurses-devel newt-devel numactl-devel pciutils-devel perl-generators xz-devel xmlto bison openssl-devel bc openssl cpio xz tar zstd -qy
 }
 
 # Only call a function if it's defined
