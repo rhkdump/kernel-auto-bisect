@@ -186,6 +186,17 @@ There might be another operation undergoing, delete any file named
 		# To avoid builidng bloated kernel image and modules, disable DEBUG_INFO_DWARF_TOOLCHAIN_DEFAULT to auto-disable CONFIG_DEBUG_INFO
 		./scripts/config -d DEBUG_INFO_DWARF_TOOLCHAIN_DEFAULT
 
+		# enable squashfs so the default crashkernel value will work
+		# squashfs depends on overlay and loop module
+		if [[ $BISECT_KDUMP == YES ]]; then
+			./scripts/config -m SQUASHFS
+			./scripts/config -m OVERLAY_FS
+			./scripts/config -m BLK_DEV_LOOP
+			for _opt in SQUASHFS_FILE_DIRECT SQUASHFS_DECOMP_MULTI_PERCPU SQUASHFS_COMPILE_DECOMP_MULTI_PERCPU SQUASHFS_XATTR SQUASHFS_ZLIB SQUASHFS_LZ4 SQUASHFS_LZO SQUASHFS_XZ SQUASHFS_ZSTD; do
+				./scripts/config -e "$_opt"
+			done
+		fi
+
 	fi
 
 	LOG starting kab
