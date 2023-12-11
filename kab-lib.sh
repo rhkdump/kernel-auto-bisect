@@ -12,6 +12,7 @@ LOG_PATH='/boot/.kernel-auto-bisect.log'
 REMOTE_LOG_PATH=''
 BISECT_WHAT=''
 BISECT_KDUMP=NO
+KEXEC_REBOOT=NO
 BAD_IF_FAILED_TO_REBOOT=YES
 # remote host who will receive logs.
 LOG_HOST=''
@@ -246,6 +247,10 @@ compile_install_kernel() {
 reboot_to_kernel_once() {
 	kernel_release=$1
 
+	if [[ $KEXEC_REBOOT == YES ]]; then
+		return
+	fi
+
 	# note older grubby doesn't accept "--info $kernel_release"
 	index=$(grubby --info /boot/vmlinuz-"$kernel_release" | sed -nE "s/index=([[:digit:]])/\1/p")
 	if ! grub2-reboot "$index"; then
@@ -403,13 +408,33 @@ prepare_reboot() {
 	fi
 }
 
+kexec_reboot() {
+	local _release _kpath _kargs
+	if _release=$(get_kernel_release); then
+		_kpath=/boot/vmlinuz-$_release
+		_kargs="$_kpath --initrd=/boot/initramfs-${_release}.img"
+
+		if ! kexec -s -l $_kargs --reuse-cmdline || ! systemctl kexec; then
+			LOG "failed to kexec reboot $_kpath, abort!"
+			exit 1
+		fi
+	else
+		LOG "Failed to the kernel version for kexec rebooting, abort!"
+		exit 1
+	fi
+}
+
 try_reboot_to_new_kernel() {
 	# real test happens after reboot
 	LOG rebooting
 	set_try_reboot_indicator
 	prepare_reboot
 	sync
-	reboot
+	if [[ $KEXEC_REBOOT == YES ]]; then
+		kexec_reboot
+	else
+		reboot
+	fi
 }
 
 success_report() {

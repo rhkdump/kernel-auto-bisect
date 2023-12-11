@@ -20,6 +20,9 @@ BISECT_WHAT SOURCE|BUILD
 # Bisect kdump kernel issues
 # BISECT_KDUMP NO
 
+# Whether to fast reboot to the install kernel using kexec
+# KEXEC_REBOOT NO
+
 # consider the commit as bad if we failed to reboot to the new kernel
 # BAD_IF_FAILED_TO_REBOOT YES
 
