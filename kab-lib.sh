@@ -311,6 +311,7 @@ cleanup_kernel() {
 		remove_kernel_rpm "$_kernel_release"
 	else
 		/usr/bin/kernel-install remove "$_kernel_release"
+		rm -rf "/usr/lib/modules/${_kernel_release}"
 	fi
 }
 
