@@ -228,8 +228,8 @@ compile_install_kernel() {
 	LOG building kernel: "${CURRENT_COMMIT}"
 
 	./scripts/config --set-str CONFIG_LOCALVERSION -"${CURRENT_COMMIT}"
-	yes $'\n' | make -j"$(grep -c '^processor' /proc/cpuinfo)"
-	if ! make modules_install -j || ! make install; then
+
+	if ! yes $'\n' | make -j"$(grep -c '^processor' /proc/cpuinfo)" || ! make modules_install -j || ! make install; then
 		LOG "failed to build kernel"
 		exit
 	fi
