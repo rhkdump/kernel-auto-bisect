@@ -139,7 +139,7 @@ There might be another operation undergoing, delete any file named
 		exit 1
 	fi
 
-	if ! dnf install git -yq; then
+	if ! rpm --quiet -q git && ! dnf install git -yq; then
 		echo "Failed to install git, abort!"
 	fi
 
