@@ -151,7 +151,24 @@ generate_mininal_config() {
 	fi
 }
 
+# When the system memory is too smaller, gcc could be killed.
+#
+# Assuming the threshold is 2024M, give a warning if it's below the
+# threshold.
+check_memory() {
+	mem_warning_threshold=2024
+	total_memory=$(free -m | awk '/^Mem:/{print $2}')
+	swap_memory=$(free -m | awk '/^Swap:/{print $2}')
+
+	total_with_swap=$((total_memory + swap_memory))
+	if [ "$total_with_swap" -lt "$mem_warning_threshold" ]; then
+		LOG "Memory smaller than ${mem_warning_threshold}M. You may need to add a swap partition if the building aborts with the error 'gcc: fatal error: Killed signal terminated program cc1'"
+	fi
+}
+
 initiate() {
+	check_memory
+
 	if [ -e "/boot/.kernel-auto-bisect.undergo" ]; then
 		echo '
         
