@@ -13,6 +13,7 @@ REMOTE_LOG_PATH=''
 BISECT_WHAT=''
 BISECT_KDUMP=NO
 KEXEC_REBOOT=NO
+SHALLOW_SINCE='1 year'
 BAD_IF_FAILED_TO_REBOOT=YES
 # remote host who will receive logs.
 LOG_HOST=''
@@ -207,8 +208,12 @@ There might be another operation undergoing, delete any file named
 		fi
 
 		if ! is_git_repo $KERNEL_SRC_PATH; then
+			_shallow_since=''
+			if [[ -n $SHALLOW_SINCE ]]; then
+				_shallow_since="--shallow-since=$SHALLOW_SINCE"
+			fi
 			# skip SSL certificate verification to workaround code.engineering.redhat.com
-			git -c http.sslVerify=false clone "$KERNEL_SRC_REPO" "$KERNEL_SRC_PATH"
+			git -c http.sslVerify=false clone "$KERNEL_SRC_REPO" "$KERNEL_SRC_PATH" "$_shallow_since"
 		fi
 
 		safe_cd "$KERNEL_SRC_PATH"

@@ -23,6 +23,9 @@ BISECT_WHAT SOURCE|BUILD
 # Whether to fast reboot to the install kernel using kexec
 # KEXEC_REBOOT NO
 
+# git clone --shallow-since
+# SHALLOW_SINCE '1 year'
+
 # consider the commit as bad if we failed to reboot to the new kernel
 # BAD_IF_FAILED_TO_REBOOT YES
 
