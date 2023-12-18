@@ -187,7 +187,7 @@ check_kdump_service() {
 
 	# make sure the kernel-install will set up the crashkernel kernel parameter
 	# automatically
-	if grep -q -s crashkernel= /etc/kernel/cmdline; then
+	if ! grep -q -s crashkernel= /etc/kernel/cmdline; then
 		echo -n " crashkernel=$(kdumpctl get-default-crashkernel)" >>/etc/kernel/cmdline
 	fi
 }
@@ -266,8 +266,13 @@ There might be another operation undergoing, delete any file named
 	call_func before_bisect
 
 	touch "/boot/.kernel-auto-bisect.undergo"
-	git bisect reset
-	LOG bisect restarting
+
+	if git bisect reset; then
+		LOG bisect restarting
+	else
+		LOG "Failed to run 'git bisect', you may need to run 'git checkout -f master'"
+		exit 1
+	fi
 	git bisect start
 	LOG good at "$1"
 	LOG bad at "$2"
