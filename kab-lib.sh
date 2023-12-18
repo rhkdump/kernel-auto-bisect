@@ -167,6 +167,31 @@ check_memory() {
 	fi
 }
 
+# For kdump issues, make sure kexec-tools has been installed and kdump.serice
+# will work
+check_kdump_service() {
+
+	if [[ $BISECT_KDUMP == NO ]]; then
+		return
+	fi
+
+	if ! dnf install kexec-tools -q -y; then
+		LOG "Failed to install kexec-tools"
+		exit 1
+	fi
+
+	if ! systemctl enable kdump; then
+		LOG "Failed to enable kdump.service"
+		exit 1
+	fi
+
+	# make sure the kernel-install will set up the crashkernel kernel parameter
+	# automatically
+	if grep -q -s crashkernel= /etc/kernel/cmdline; then
+		echo -n " crashkernel=$(kdumpctl get-default-crashkernel)" >>/etc/kernel/cmdline
+	fi
+}
+
 initiate() {
 	check_memory
 
@@ -183,6 +208,8 @@ There might be another operation undergoing, delete any file named
 	if ! rpm --quiet -q git && ! dnf install git -yq; then
 		echo "Failed to install git, abort!"
 	fi
+
+	check_kdump_service
 
 	[ ! -d $KAB_WD ] && mkdir -p "$KAB_WD"
 
