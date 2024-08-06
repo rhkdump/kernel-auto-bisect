@@ -280,8 +280,16 @@ There might be another operation undergoing, delete any file named
 	git bisect start
 	LOG good at "$1"
 	LOG bad at "$2"
-	git bisect good "$_good_commit"
-	git bisect bad "$_bad_commit"
+
+	if ! git bisect good "$_good_commit"; then
+		LOG "Pleasure make sure good commit $_good_commit is valid"
+		exit 1
+	fi
+
+	if ! git bisect bad "$_bad_commit"; then
+		LOG "Pleasure make sure bad commit $_bad_commit is valid"
+		exit 1
+	fi
 }
 
 # To speed-up building, only build kernel modules that are in-use or included in initrd
