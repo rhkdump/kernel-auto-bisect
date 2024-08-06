@@ -240,13 +240,17 @@ There might be another operation undergoing, delete any file named
 				_shallow_since="--shallow-since=$SHALLOW_SINCE"
 			fi
 			# skip SSL certificate verification to workaround code.engineering.redhat.com
-			git -c http.sslVerify=false clone "$KERNEL_SRC_REPO" "$KERNEL_SRC_PATH" "$_shallow_since"
+			if git -c http.sslVerify=false clone "$KERNEL_SRC_REPO" "$KERNEL_SRC_PATH" "$_shallow_since"; then
+				echo "Failed to clone the kernel, abort"
+				exit 1
+			fi
 		fi
 
 		safe_cd "$KERNEL_SRC_PATH"
 
 		if ! install_kernel_devel; then
 			echo "Failed to install the packages for building kernel, abort"
+			exit 1
 		fi
 
 		generate_mininal_config
