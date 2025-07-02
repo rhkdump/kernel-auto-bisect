@@ -20,6 +20,10 @@ LOG_HOST=''
 # Add defaults for flaky test handling
 REPRO_ATTEMPTS=1
 REPRO_SUCCESSES=1
+# State file for persisting flaky test attempts (for kdump/crash reboots)
+KAB_ATTEMPT_FILE=/boot/.kab-bisect-attempt
+# File to store the original default kernel for restoration
+KAB_ORIG_DEFAULT_KERNEL_FILE=/boot/.kab-orig-default-kernel
 
 read_conf() {
 	# Following steps are applied in order: strip trailing comment, strip trailing space,
@@ -380,6 +384,16 @@ install_kernel() {
 	else
 		exit 1
 	fi
+
+	# For kdump with multiple attempts, set test kernel as default and save original default
+	if [[ $BISECT_KDUMP == YES && $REPRO_ATTEMPTS -gt 1 ]]; then
+		if [[ ! -f $KAB_ORIG_DEFAULT_KERNEL_FILE ]]; then
+			get_default_kernel > $KAB_ORIG_DEFAULT_KERNEL_FILE
+		fi
+		# Set the test kernel as default
+		kernel_release=$(get_kernel_release)
+		grubby --set-default /boot/vmlinuz-$kernel_release
+	fi
 }
 
 remove_kernel_rpm() {
@@ -429,6 +443,23 @@ set_reboot_status() {
 }
 
 success_string=''
+save_attempt_state() {
+	echo "$1 $2" > "$KAB_ATTEMPT_FILE"
+}
+
+load_attempt_state() {
+	if [[ -f $KAB_ATTEMPT_FILE ]]; then
+		read -r attempt success < "$KAB_ATTEMPT_FILE"
+	else
+		attempt=1
+		success=0
+	fi
+}
+
+clear_attempt_state() {
+	rm -f "$KAB_ATTEMPT_FILE"
+}
+
 detect_good_bad() {
 	local _result=BAD
 	local _old_kernel_release
@@ -439,16 +470,33 @@ detect_good_bad() {
 		clean_reboot_status
 
 		pushd "$PWD"
-		# Flaky test logic: run on_test multiple times
+		# Flaky test logic: run on_test multiple times, persist state for kdump
 		local attempt success
-		success=0
-		for ((attempt=1; attempt<=REPRO_ATTEMPTS; attempt++)); do
+		load_attempt_state
+		while (( attempt <= REPRO_ATTEMPTS )); do
 			if on_test; then
 				success=$((success+1))
 			fi
+			if (( success >= REPRO_SUCCESSES )); then
+				_result=GOOD
+				break
+			fi
+			attempt=$((attempt+1))
+			# If kdump is enabled, save state and break to allow for crash/reboot
+			if [[ $BISECT_KDUMP == YES ]]; then
+				save_attempt_state "$attempt" "$success"
+				trigger_pannic
+			fi
 		done
-		if (( success >= REPRO_SUCCESSES )); then
-			_result=GOOD
+		# If finished, clear state file
+		if (( attempt > REPRO_ATTEMPTS )) || (( success >= REPRO_SUCCESSES )); then
+			clear_attempt_state
+			# For kdump with multiple attempts, restore original default kernel
+			if [[ $BISECT_KDUMP == YES && $REPRO_ATTEMPTS -gt 1 && -f $KAB_ORIG_DEFAULT_KERNEL_FILE ]]; then
+				orig_kernel=$(cat $KAB_ORIG_DEFAULT_KERNEL_FILE)
+				grubby --set-default "$orig_kernel"
+				rm -f $KAB_ORIG_DEFAULT_KERNEL_FILE
+			fi
 		fi
 		popd
 	else

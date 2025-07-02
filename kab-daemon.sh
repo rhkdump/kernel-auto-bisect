@@ -7,6 +7,11 @@ LOG reboot complete
 
 safe_cd "$KERNEL_SRC_PATH"
 
+# Resume bisect attempt after kdump/crash reboot if state file exists
+if [ -f $KAB_ATTEMPT_FILE ]; then
+	LOG "Resuming bisect attempt after crash/kdump reboot."
+fi
+
 if did_we_try_reboot; then
 	clean_try_reboot_indicator
 	set_reboot_status
