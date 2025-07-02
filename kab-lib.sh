@@ -301,14 +301,12 @@ compile_install_kernel() {
 
 	if ! yes $'\n' | make -j"$(grep -c '^processor' /proc/cpuinfo)" || ! make modules_install -j || ! make install; then
 		LOG "failed to build kernel"
-		exit
+		return 1
 	fi
 
 	LOG kernel building complete
-	# notice that next reboot should use new kernel
-	grubby --set-default "/boot/vmlinuz-$(uname -r)"
-	krelease=$(make kernelrelease)
-	reboot_to_kernel_once "$krelease"
+	echo -n "$(make kernelrelease)"
+	return 0
 }
 
 # use grub2-reboot to reboot to the new kernel only once
@@ -333,10 +331,6 @@ get_default_kernel() {
 }
 
 install_kernel_rpm() {
-	# dnf will make the newly installed kernel as default boot entry
-	local _default_kernel
-
-	_default_kernel=$(get_default_kernel)
 	kernel_release=$(<kernel_release)
 	url=$(<kernel_url)
 	for name in kernel kernel-core kernel-modules kernel-modules-core; do
@@ -345,21 +339,33 @@ install_kernel_rpm() {
 	done
 
 	if dnf install $KERNEL_RPMS_DIR/kernel-*${kernel_release}.rpm -qy; then
-		# restore the default boot entry
-		grubby --set-default "$_default_kernel"
-		reboot_to_kernel_once "$kernel_release"
+		echo -n "$kernel_release"
 		LOG "Installed kernel $kernel_release successfully"
+		return 0
 	else
 		LOG "Failed to install kernel $kernel_release"
-		exit 1
+		return 1
 	fi
 }
 
 install_kernel() {
+	local _default_kernel _method
+
+	_default_kernel=$(get_default_kernel)
+
 	if [[ $BISECT_WHAT == SOURCE ]]; then
-		compile_install_kernel
+		_method=compile_install_kernel
 	elif [[ $BISECT_WHAT == BUILD ]]; then
-		install_kernel_rpm
+		_method=install_kernel_rpm
+	fi
+
+	if kernel_release=$($_method); then
+		# dnf/kernel-install will make the newly installed kernel as default boot entry
+		# restore the default boot entry
+		grubby --set-default "$_default_kernel"
+		reboot_to_kernel_once "$kernel_release"
+	else
+		exit 1
 	fi
 }
 
