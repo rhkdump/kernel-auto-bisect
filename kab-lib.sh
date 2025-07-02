@@ -17,6 +17,9 @@ SHALLOW_SINCE='1 year'
 BAD_IF_FAILED_TO_REBOOT=YES
 # remote host who will receive logs.
 LOG_HOST=''
+# Add defaults for flaky test handling
+REPRO_ATTEMPTS=1
+REPRO_SUCCESSES=1
 
 read_conf() {
 	# Following steps are applied in order: strip trailing comment, strip trailing space,
@@ -28,6 +31,14 @@ check_config() {
 	while read -r config_opt config_val; do
 		eval "$config_opt"="$config_val"
 	done <<<"$(read_conf)"
+
+	# Ensure REPRO_ATTEMPTS and REPRO_SUCCESSES are set to at least 1
+	if [[ -z $REPRO_ATTEMPTS || $REPRO_ATTEMPTS -lt 1 ]]; then
+		REPRO_ATTEMPTS=1
+	fi
+	if [[ -z $REPRO_SUCCESSES || $REPRO_SUCCESSES -lt 1 ]]; then
+		REPRO_SUCCESSES=1
+	fi
 
 	if [[ $BISECT_WHAT != BUILD && $BISECT_WHAT != SOURCE ]]; then
 		echo BISECT_WHAT must be chosen between SOURCE and BUILD
@@ -138,6 +149,8 @@ generate_mininal_config() {
 	sed -i "/rhel.pem/d" .config
 
 	# To avoid builidng bloated kernel image and modules, disable DEBUG_INFO_DWARF_TOOLCHAIN_DEFAULT to auto-disable CONFIG_DEBUG_INFO
+	./scripts/config -d DEBUG_INFO_BTF
+	./scripts/config -d DEBUG_INFO_BTF_MODULES
 	./scripts/config -d DEBUG_INFO_DWARF_TOOLCHAIN_DEFAULT
 
 	# enable squashfs so the default crashkernel value will work
@@ -426,7 +439,15 @@ detect_good_bad() {
 		clean_reboot_status
 
 		pushd "$PWD"
-		if on_test; then
+		# Flaky test logic: run on_test multiple times
+		local attempt success
+		success=0
+		for ((attempt=1; attempt<=REPRO_ATTEMPTS; attempt++)); do
+			if on_test; then
+				success=$((success+1))
+			fi
+		done
+		if (( success >= REPRO_SUCCESSES )); then
 			_result=GOOD
 		fi
 		popd

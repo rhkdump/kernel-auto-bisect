@@ -39,3 +39,8 @@ BISECT_WHAT SOURCE|BUILD
 # be set up properly.
 # REPORT_EMAIL example@redhat.com
 
+# Number of times to attempt to reproduce the issue for each commit (for flaky/intermittent issues)
+# REPRO_ATTEMPTS 5
+# Minimum number of successful reproductions required to consider the commit GOOD
+# REPRO_SUCCESSES 3
+

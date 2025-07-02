@@ -28,3 +28,5 @@ else
 	install_kernel
 	try_reboot_to_new_kernel
 fi
+
+# Flaky/intermittent issue bisecting is supported via REPRO_ATTEMPTS and REPRO_SUCCESSES in config
