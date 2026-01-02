@@ -228,6 +228,14 @@ setup_criu() {
 		fi
 	fi
 
+	if ! command -v crontab; then
+		if ! dnf install cronie -yq; then
+			log "Failed to install cronie!"
+			exit 1
+		fi
+		systemctl enable --now crond
+	fi
+
 	CRONTAB="$WORK_DIR/crontab"
 	cat <<END >"$CRONTAB"
 PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:$BIN_DIR
