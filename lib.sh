@@ -246,6 +246,31 @@ END
 	crontab "$CRONTAB"
 }
 
+setup_kdump() {
+	if [[ "$TEST_STRATEGY" == "panic" ]]; then
+		if ! command -v kdumpctl; then
+			if ! dnf install kexec-tools -yq; then
+				log "Failed to install kexec-tools!"
+				exit 1
+			fi
+		fi
+
+		if ! grep -q "crashkernel" /proc/cmdline; then
+			log "Adding crashkernel=256M to kernel arguments"
+			run_cmd grubby --update-kernel=ALL --args="crashkernel=256M"
+
+			# Ensure kdump is enabled for next boot
+			systemctl enable kdump
+
+			log "Rebooting to apply crashkernel argument..."
+			signal_checkpoint "reboot"
+		else
+			# Ensure kdump is running if crashkernel is already present
+			systemctl enable --now kdump
+		fi
+	fi
+}
+
 initialize() {
 	local good_ref bad_ref
 
@@ -281,6 +306,7 @@ initialize() {
 
 	[[ -n $KAB_TEST_HOST ]] && return
 	setup_criu
+	setup_kdump
 }
 
 verify_intial_commits() {
