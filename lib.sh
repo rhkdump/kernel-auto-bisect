@@ -125,7 +125,7 @@ reboot_and_wait() {
 	_ssh_opts=(-q)
 
 	if [[ -f $KAB_TEST_HOST_SSH_KEY ]]; then
-		_ssh_opts+=("-i" "$KAB_TEST_HOST_SSH_KEY")
+		_ssh_opts+=("-i" "$KAB_TEST_HOST_SSH_KEY" -o IdentitiesOnly=yes)
 	fi
 
 	# Avoid hanging forever after triggering kernel panic
@@ -383,7 +383,7 @@ run_cmd() {
 		# - BatchMode: avoiding waiting forever for user password
 		_ssh_opts=(-o BatchMode=yes)
 		if [[ -f $KAB_TEST_HOST_SSH_KEY ]]; then
-			_ssh_opts+=("-i" "$KAB_TEST_HOST_SSH_KEY")
+			_ssh_opts+=("-i" "$KAB_TEST_HOST_SSH_KEY" -o IdentitiesOnly=yes)
 		fi
 		ssh "${_ssh_opts[@]}" "$KAB_TEST_HOST" "${_cmd[@]}"
 	else

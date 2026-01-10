@@ -21,7 +21,7 @@ if echo "${CLIENTS}" | grep -qi "${HOSTNAME}"; then
 	if [ -z $SERVER_SSH_KEY ]; then
 		SERVER_SSH_KEY=${TMT_TEST_PLAN_ROOT}/provision/server/id_ecdsa
 	fi
-	ssh_args=(-o BatchMode=yes)
+	ssh_args=(-o BatchMode=yes -o IdentitiesOnly=yes)
 	if [[ -f $SERVER_SSH_KEY ]]; then
 		ssh_args+=(-i "$SERVER_SSH_KEY")
 	fi
@@ -77,7 +77,7 @@ END
 
 	bash -x $KAB_SCRIPT </dev/null &>/root/test.log
 
-	if ssh -i "$SERVER_SSH_KEY" "${SERVERS}" "cd $GIT_REPO && git bisect log" | grep -q "first bad commit"; then
+	if ssh -o IdentitiesOnly=yes -i "$SERVER_SSH_KEY" "${SERVERS}" "cd $GIT_REPO && git bisect log" | grep -q "first bad commit"; then
 		echo "Found 1st bad commit"
 	else
 		exit 1

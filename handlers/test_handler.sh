@@ -38,7 +38,7 @@ signal_checkpoint_panic() {
 
 cp_file() {
 	if [[ -n $KAB_TEST_HOST_SSH_KEY ]]; then
-		_ssh_opts=("-i" "$KAB_TEST_HOST_SSH_KEY")
+		_ssh_opts=("-i" "$KAB_TEST_HOST_SSH_KEY" -o IdentitiesOnly=yes)
 	fi
 
 	scp "${_ssh_opts[@]}" "$1" "$KAB_TEST_HOST":"$1"

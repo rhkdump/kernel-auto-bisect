@@ -20,7 +20,7 @@ if echo "${CLIENTS}" | grep -qi "${HOSTNAME}"; then
 	TMT_TEST_PLAN_ROOT=${TMT_PLAN_DATA%data}
 	SERVER_SSH_KEY=${TMT_TEST_PLAN_ROOT}/provision/server/id_ecdsa
 	# Add $SERVERS to known host
-	ssh -o StrictHostKeyChecking=accept-new -i "$SERVER_SSH_KEY" "${SERVERS}"
+	ssh -o StrictHostKeyChecking=accept-new -o IdentitiesOnly=yes -i "$SERVER_SSH_KEY" "${SERVERS}" "exit 0"
 	cat <<END >"$CONF_FILE"
 INSTALL_STRATEGY="rpm"
 TEST_STRATEGY="panic"
