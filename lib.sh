@@ -213,8 +213,8 @@ generate_git_repo_from_package_list() {
 		local _str=$(basename "$_url")
 		_str=${_str#kernel-core-}
 		local k_rel=${_str%.rpm}
-		run_cmd_in_GIT_REPO echo "$_url" >k_url
-		run_cmd_in_GIT_REPO echo "$k_rel" >k_rel
+		run_cmd_in_GIT_REPO bash -c "echo '$_url' >k_url"
+		run_cmd_in_GIT_REPO bash -c "echo '$k_rel' >k_rel"
 		run_cmd_in_GIT_REPO git commit -m "$k_rel" k_url k_rel >/dev/null
 		release_commit_map[$k_rel]=$(run_cmd_in_GIT_REPO git rev-parse HEAD)
 	done <"$KERNEL_RPM_LIST"
