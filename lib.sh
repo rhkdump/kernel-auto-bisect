@@ -122,7 +122,7 @@ reboot_and_wait() {
 	WAIT_REMOTE_HOST_UP=300
 
 	[[ -z $KAB_TEST_HOST ]] && do_abort "$KAB_TEST_HOST not set. Something wrong!"
-	_ssh_opts=(-q)
+	_ssh_opts=(-n -q)
 
 	if [[ -f $KAB_TEST_HOST_SSH_KEY ]]; then
 		_ssh_opts+=("-i" "$KAB_TEST_HOST_SSH_KEY" -o IdentitiesOnly=yes)
@@ -381,7 +381,8 @@ run_cmd() {
 
 	if [[ -n $KAB_TEST_HOST ]]; then
 		# - BatchMode: avoiding waiting forever for user password
-		_ssh_opts=(-o BatchMode=yes)
+		# - n: prevent ssh from reading stdin (important for while loops)
+		_ssh_opts=(-n -o BatchMode=yes)
 		if [[ -f $KAB_TEST_HOST_SSH_KEY ]]; then
 			_ssh_opts+=("-i" "$KAB_TEST_HOST_SSH_KEY" -o IdentitiesOnly=yes)
 		fi
