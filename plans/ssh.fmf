@@ -2,8 +2,13 @@ discover:
   - name: kab on two machines
     how: fmf
     test:
-     - /tests/kab_ssh
+     - /tests/kab_ssh$
 
 provision:
    - name: client
+     how: connect
+     guest: 192.168.122.234
+
    - name: server
+     how: connect
+     guest: 192.168.122.25

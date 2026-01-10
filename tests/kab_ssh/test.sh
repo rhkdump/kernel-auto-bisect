@@ -62,7 +62,7 @@ END
 	wait_time=0
 	cd "$GIT_REPO" || exit 1
 
-	if git bisect log | grep -q "first bad commit"; then
+    if ssh -o IdentitiesOnly=yes -i "$SERVER_SSH_KEY" "${SERVERS}" "cd $GIT_REPO && git bisect log" | grep -q "first bad commit"; then
 		echo "Found 1st bad commit"
 	else
 		exit 1
