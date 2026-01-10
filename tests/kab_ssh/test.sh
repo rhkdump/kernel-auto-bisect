@@ -20,7 +20,11 @@ if echo "${CLIENTS}" | grep -qi "${HOSTNAME}"; then
 	TMT_TEST_PLAN_ROOT=${TMT_PLAN_DATA%data}
 	SERVER_SSH_KEY=${TMT_TEST_PLAN_ROOT}/provision/server/id_ecdsa
 	# Add $SERVERS to known host
-	ssh -o StrictHostKeyChecking=accept-new -o IdentitiesOnly=yes -i "$SERVER_SSH_KEY" "${SERVERS}" "exit 0"
+	if [[ -f "$SERVER_SSH_KEY" ]]; then
+		ssh -o StrictHostKeyChecking=accept-new -o IdentitiesOnly=yes -i "$SERVER_SSH_KEY" "${SERVERS}" "exit 0"
+	else
+		ssh -o StrictHostKeyChecking=accept-new "${SERVERS}" "exit 0"
+	fi
 	cat <<END >"$CONF_FILE"
 INSTALL_STRATEGY="rpm"
 TEST_STRATEGY="panic"
@@ -31,8 +35,10 @@ BAD_COMMIT=$BAD_COMMIT
 REPRODUCER_SCRIPT=$TEST_SCRIPT
 KERNEL_RPM_LIST=$KERNEL_RPM_LIST
 KAB_TEST_HOST=${SERVERS}
-KAB_TEST_HOST_SSH_KEY=${SERVER_SSH_KEY}
 END
+	if [[ -f "$SERVER_SSH_KEY" ]]; then
+		echo "KAB_TEST_HOST_SSH_KEY=${SERVER_SSH_KEY}" >>"$CONF_FILE"
+	fi
 
 	cat <<END >$KERNEL_RPM_LIST
 https://kojipkgs.fedoraproject.org/packages/kernel/6.16.4/100.fc41/${ARCH}/kernel-core-6.16.4-100.fc41.${ARCH}.rpm
@@ -62,7 +68,12 @@ END
 	wait_time=0
 	cd "$GIT_REPO" || exit 1
 
-    if ssh -o IdentitiesOnly=yes -i "$SERVER_SSH_KEY" "${SERVERS}" "cd $GIT_REPO && git bisect log" | grep -q "first bad commit"; then
+    if [[ -f "$SERVER_SSH_KEY" ]]; then
+		ssh_cmd="ssh -o IdentitiesOnly=yes -i $SERVER_SSH_KEY"
+	else
+		ssh_cmd="ssh"
+	fi
+	if $ssh_cmd "${SERVERS}" "cd $GIT_REPO && git bisect log" | grep -q "first bad commit"; then
 		echo "Found 1st bad commit"
 	else
 		exit 1

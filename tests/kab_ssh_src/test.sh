@@ -57,8 +57,10 @@ GOOD_COMMIT=$GOOD_COMMIT
 BAD_COMMIT=$BAD_COMMIT
 REPRODUCER_SCRIPT=$TEST_SCRIPT
 KAB_TEST_HOST=${SERVERS}
-KAB_TEST_HOST_SSH_KEY=${SERVER_SSH_KEY}
 END
+	if [[ -f "$SERVER_SSH_KEY" ]]; then
+		echo "KAB_TEST_HOST_SSH_KEY=${SERVER_SSH_KEY}" >>"$CONF_FILE"
+	fi
 
 	cat <<END >"$TEST_SCRIPT"
 #!/bin/bash
@@ -77,7 +79,7 @@ END
 
 	bash -x $KAB_SCRIPT </dev/null &>/root/test.log
 
-	if ssh -o IdentitiesOnly=yes -i "$SERVER_SSH_KEY" "${SERVERS}" "cd $GIT_REPO && git bisect log" | grep -q "first bad commit"; then
+	if ssh "${ssh_args[@]}" "cd $GIT_REPO && git bisect log" | grep -q "first bad commit"; then
 		echo "Found 1st bad commit"
 	else
 		exit 1
