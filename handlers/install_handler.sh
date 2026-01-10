@@ -127,7 +127,7 @@ install_from_rpm() {
 	local commit_to_install=$1
 	log "Strategy: install_from_rpm for commit ${commit_to_install}"
 
-	if ! command -v wget; then
+	if ! run_cmd command -v wget; then
 		run_cmd dnf install wget -yq
 	fi
 
@@ -136,14 +136,14 @@ install_from_rpm() {
 	local release=$(run_cmd_in_GIT_REPO cat k_rel)
 	local arch=$(echo "$core_url" | rev | cut -d. -f2 | rev)
 	local rpm_cache_dir="$RPM_CACHE_DIR"
-	mkdir -p "$rpm_cache_dir"
+	run_cmd mkdir -p "$rpm_cache_dir"
 	local rpms_to_install=()
 
 	for pkg in kernel-core kernel-modules kernel-modules-core kernel-modules-extra kernel; do
 		local rpm_filename="${pkg}-${release}.rpm"
 		local rpm_path="${rpm_cache_dir}/${rpm_filename}"
 		local rpm_url="${base_url}/${rpm_filename}"
-		if [ ! -f "$rpm_path" ]; then
+		if ! run_cmd test -f "$rpm_path"; then
 			log "Downloading ${rpm_filename}..."
 			if ! run_cmd wget --no-check-certificate -q -O "$rpm_path" "$rpm_url"; then
 				run_cmd rm -f "$rpm_path"
