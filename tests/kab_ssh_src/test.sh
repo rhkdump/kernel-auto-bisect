@@ -79,7 +79,7 @@ END
 
 	bash -x $KAB_SCRIPT </dev/null &>/root/test.log
 
-	if ssh "${ssh_args[@]}" "cd $GIT_REPO && git bisect log" | grep -q "first bad commit"; then
+	if ssh "${ssh_args[@]}" "cd $GIT_REPO && git bisect log" | grep "first bad commit" | grep -q "$BAD_COMMIT"; then
 		echo "Found 1st bad commit"
 	else
 		exit 1

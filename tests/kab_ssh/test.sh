@@ -73,7 +73,7 @@ END
 	else
 		ssh_cmd="ssh"
 	fi
-	if $ssh_cmd "${SERVERS}" "cd $GIT_REPO && git bisect log" | grep -q "first bad commit"; then
+	if $ssh_cmd "${SERVERS}" "cd $GIT_REPO && git bisect log" | grep "first bad commit" | grep -q "$BAD_COMMIT"; then
 		echo "Found 1st bad commit"
 	else
 		exit 1
