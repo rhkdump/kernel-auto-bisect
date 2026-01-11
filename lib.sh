@@ -424,3 +424,13 @@ generate_final_report() {
 	run_cmd_in_GIT_REPO git bisect log >"$WORK_DIR/bisect_final_log.txt"
 	log "Final report saved to $WORK_DIR/bisect_final_log.txt"
 }
+
+reboot_to_origin_kernel() {
+	set_boot_kernel "$ORIGINAL_KERNEL"
+	run_cmd systemctl reboot
+}
+
+finish() {
+	generate_final_report
+	reboot_to_origin_kernel
+}

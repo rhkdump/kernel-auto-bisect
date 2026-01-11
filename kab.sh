@@ -36,7 +36,7 @@ main_bisect_loop() {
 			fi
 		fi
 	done
-	generate_final_report
+	finish
 }
 
 do_start
