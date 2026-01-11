@@ -68,7 +68,7 @@ END
 	wait_time=0
 	cd "$GIT_REPO" || exit 1
 
-    if [[ -f "$SERVER_SSH_KEY" ]]; then
+	if [[ -f "$SERVER_SSH_KEY" ]]; then
 		ssh_cmd="ssh -o IdentitiesOnly=yes -i $SERVER_SSH_KEY"
 	else
 		ssh_cmd="ssh"
