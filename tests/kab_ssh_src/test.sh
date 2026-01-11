@@ -37,6 +37,8 @@ if echo "${CLIENTS}" | grep -qi "${HOSTNAME}"; then
 			echo "Failed to clone $GIT_REPO_URL"
 			exit 1
 		fi
+	else
+		ssh "${ssh_args[@]}" "cd '$GIT_REPO' && git bisect reset"
 	fi
 
 	if ! GOOD_COMMIT=$(ssh "${ssh_args[@]}" "cd $GIT_REPO && git log -1 --pretty=format:'%h' HEAD~3"); then
