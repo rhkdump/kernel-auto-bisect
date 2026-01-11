@@ -3,3 +3,10 @@ discover:
     how: fmf
     test:
      - /tests/kab_criu
+
+adjust:
+    provision:
+       - name: server
+         how: connect
+         guest: $@KAB_SERVER_IP
+    when: KAB_SERVER_IP is defined

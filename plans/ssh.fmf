@@ -6,9 +6,20 @@ discover:
 
 provision:
    - name: client
-     how: connect
-     guest: 192.168.122.234
+     how: virtual
+     connection: system
 
    - name: server
-     how: connect
-     guest: 192.168.122.25
+     how: virtual
+     connection: system
+
+adjust:
+    provision:
+       - name: client
+         how: connect
+         guest: $@KAB_CLIENT_IP
+
+       - name: server
+         how: connect
+         guest: $@KAB_SERVER_IP
+    when: KAB_CLIENT_IP is defined and KAB_SERVER_IP is defined
