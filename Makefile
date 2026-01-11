@@ -26,6 +26,22 @@ help:
 	@echo "  uninstall    Remove all installed files."
 	@echo "  help         Show this help message."
 
+format-check:
+	@command -v shfmt >/dev/null 2>&1 || { echo "Error: shfmt not found. Please install it."; exit 1; }
+	shfmt -d kab.sh lib.sh handlers/*.sh
+	shfmt -d tests/*/*.sh
+
+static-analysis:
+	@command -v shellcheck >/dev/null 2>&1 || { echo "Error: shellcheck not found. Please install it."; exit 1; }
+	shellcheck -x kab.sh lib.sh handlers/*.sh
+
+TMT_CONTEXT_ARG := $(shell test -f KAB_TMT_CONTEXT && echo "-c @KAB_TMT_CONTEXT")
+
+integration-tests:
+	tmt $(TMT_CONTEXT_ARG) run -a
+
+tests: format-check static-analysis integration-tests
+
 install:
 	@if [ "$(EUID)" -ne 0 ]; then \
 		echo "Please run as root or with sudo."; \
