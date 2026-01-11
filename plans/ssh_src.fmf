@@ -1,0 +1,25 @@
+discover:
+  - name: bisecting kernel source on two machines
+    how: fmf
+    test:
+     - /tests/kab_ssh_src
+
+provision:
+   - name: client
+     how: virtual
+     connection: system
+
+   - name: server
+     how: virtual
+     connection: system
+
+adjust:
+    provision:
+       - name: client
+         how: connect
+         guest: $@KAB_CLIENT_IP_SRC
+
+       - name: server
+         how: connect
+         guest: $@KAB_SERVER_IP_SRC
+    when: KAB_CLIENT_IP_SRC is defined and KAB_SERVER_IP_SRC is defined
