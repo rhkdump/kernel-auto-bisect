@@ -74,9 +74,9 @@ _openssl_engine_workaround() {
 		do_abort "Can't get current branch"
 	fi
 
-	run_cmd_in_GIT_REPO git show $CURRENT_BRANCH:scripts/sign-file.c ">scripts/sign-file.c"
-	run_cmd_in_GIT_REPO git show $CURRENT_BRANCH:certs/extract-cert.c ">certs/extract-cert.c"
-	run_cmd_in_GIT_REPO git show $CURRENT_BRANCH:scripts/ssl-common.h ">scripts/ssl-common.h"
+	run_cmd_in_GIT_REPO git show "$CURRENT_BRANCH":scripts/sign-file.c ">scripts/sign-file.c"
+	run_cmd_in_GIT_REPO git show "$CURRENT_BRANCH":certs/extract-cert.c ">certs/extract-cert.c"
+	run_cmd_in_GIT_REPO git show "$CURRENT_BRANCH":scripts/ssl-common.h ">scripts/ssl-common.h"
 	run_cmd_in_GIT_REPO cp scripts/ssl-common.h certs/
 }
 
@@ -131,10 +131,13 @@ install_from_rpm() {
 		run_cmd dnf install wget -yq
 	fi
 
-	local core_url=$(run_cmd_in_GIT_REPO cat k_url)
-	local base_url=$(run_cmd_in_GIT_REPO dirname "$core_url")
-	local release=$(run_cmd_in_GIT_REPO cat k_rel)
-	local arch=$(echo "$core_url" | rev | cut -d. -f2 | rev)
+	local core_url
+	core_url=$(run_cmd_in_GIT_REPO cat k_url)
+	local base_url
+	base_url=$(run_cmd_in_GIT_REPO dirname "$core_url")
+	local release
+	release=$(run_cmd_in_GIT_REPO cat k_rel)
+	# shellcheck disable=SC2153
 	local rpm_cache_dir="$RPM_CACHE_DIR"
 	run_cmd mkdir -p "$rpm_cache_dir"
 	local rpms_to_install=()
