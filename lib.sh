@@ -28,7 +28,9 @@ load_config_and_handlers() {
 		echo "FATAL: Config file missing!" | tee -a "$LOG_FILE"
 		exit 1
 	fi
+	# shellcheck disable=SC1090
 	source "$CONFIG_FILE"
+	# shellcheck disable=SC1090
 	for handler in "${HANDLER_DIR}"/*.sh; do if [ -f "$handler" ]; then source "$handler"; fi; done
 	run_cmd dnf install git -yq
 
@@ -132,6 +134,7 @@ reboot_and_wait() {
 	_ssh_opts+=(-o ChannelTimeout=session=2s)
 
 	ssh "${_ssh_opts[@]}" "$KAB_TEST_HOST" sync
+	# shellcheck disable=SC2029
 	ssh "${_ssh_opts[@]}" "$KAB_TEST_HOST" "$@"
 
 	_ssh_opts+=(-o ConnectTimeout=3)
@@ -387,6 +390,7 @@ run_cmd() {
 		if [[ -f $KAB_TEST_HOST_SSH_KEY ]]; then
 			_ssh_opts+=("-i" "$KAB_TEST_HOST_SSH_KEY" -o IdentitiesOnly=yes)
 		fi
+		# shellcheck disable=SC2029
 		ssh "${_ssh_opts[@]}" "$KAB_TEST_HOST" "${_cmd[@]}"
 	else
 		# For simply running command locally, "$@" will a better choice than
@@ -402,6 +406,7 @@ run_cmd() {
 		#
 		#   eval cd "$GIT_REPO" '&&' git bisect log "|" grep -q "first bad commit"
 		#   ssh HOST "$GIT_REPO" '&&' git bisect log "|" grep -q "first bad commit"
+		# shellcheck disable=SC2294
 		eval "${_cmd[@]}"
 	fi
 }
