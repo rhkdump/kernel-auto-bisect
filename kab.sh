@@ -4,6 +4,7 @@
 #
 # Uses CRIU (Checkpoint Restore in Userspace) to restore the process for reboot or kernel panic
 #
+# shellcheck source=lib.sh
 source /usr/local/bin/kernel-auto-bisect/lib.sh
 
 do_start() {

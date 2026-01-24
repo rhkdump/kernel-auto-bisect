@@ -24,6 +24,7 @@ single_instance_lock() {
 }
 
 single_instance_lock
+# shellcheck source=lib.sh
 source /usr/local/bin/kernel-auto-bisect/lib.sh
 
 log() {
