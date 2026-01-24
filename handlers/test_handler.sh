@@ -5,6 +5,7 @@
 #
 
 _init_test_handler() {
+	# shellcheck disable=SC1090
 	source "$REPRODUCER_SCRIPT"
 
 	if ! type setup_test &>/dev/null; then log "'setup_test' function not found"; fi
@@ -57,6 +58,7 @@ do_panic() {
 
 _handler_run_test() {
 	if [[ -z $KAB_TEST_HOST ]]; then
+		# shellcheck disable=SC1090
 		source "$REPRODUCER_SCRIPT"
 		$1
 		return $?
@@ -131,6 +133,7 @@ run_panic_test() {
 
 run_simple_test() {
 	if [ ! -f "$REPRODUCER_SCRIPT" ]; then do_abort "Reproducer script not found."; fi
+	# shellcheck disable=SC1090
 	source "$REPRODUCER_SCRIPT"
 	if ! type on_test &>/dev/null; then do_abort "'on_test' function not found for simple mode."; fi
 
