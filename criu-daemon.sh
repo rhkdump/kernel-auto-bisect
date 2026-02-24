@@ -41,14 +41,15 @@ find_bisect_pid() {
 }
 
 do_checkpoint() {
-	local bisect_pid=$(find_bisect_pid)
+	local bisect_pid
+	bisect_pid=$(find_bisect_pid)
 	if [[ -z "$bisect_pid" ]]; then
 		log "ERROR: No bisection process found to checkpoint"
 		return 1
 	fi
 
 	log "Checkpointing bisection process (PID: $bisect_pid)"
-	log_num=$(ls -l $DUMP_LOG_DIR/dump*_cmd.log 2>/dev/null | wc -l)
+	log_num=$(find "$DUMP_LOG_DIR" -name "dump*_cmd.log" 2>/dev/null | wc -l)
 	((++log_num))
 	dump_log=$DUMP_LOG_DIR/dump${log_num}.log
 	cmd_log=$DUMP_LOG_DIR/dump${log_num}_cmd.log
@@ -56,7 +57,7 @@ do_checkpoint() {
 		log "Checkpoint successful"
 		return 0
 	else
-		rm -rf "$DUMP_DIR"/*
+		rm -rf "${DUMP_DIR:?}"/*
 		log "ERROR: Checkpoint failed"
 		return 1
 	fi
@@ -69,7 +70,7 @@ do_restore() {
 		# prevent "PID mismatch on restore" https://criu.org/When_C/R_fails
 		unshare -p -m --fork --mount-proc
 
-		log_num=$(ls -l $DUMP_LOG_DIR/restore*_cmd.log 2>/dev/null | wc -l)
+		log_num=$(find "$DUMP_LOG_DIR" -name "restore*_cmd.log" 2>/dev/null | wc -l)
 		((++log_num))
 		restore_log=$DUMP_LOG_DIR/retore${log_num}.log
 		cmd_log=$DUMP_LOG_DIR/retore${log_num}_cmd.log
@@ -77,7 +78,7 @@ do_restore() {
 			log "Restore successful"
 			touch "$RESTORE_FLAG"
 			# Clean up checkpoint files after successful restore
-			rm -rf "$DUMP_DIR"/*
+			rm -rf "${DUMP_DIR:?}"/*
 			return 0
 		else
 			log "ERROR: Restore failed"

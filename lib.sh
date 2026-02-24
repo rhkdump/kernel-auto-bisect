@@ -5,16 +5,20 @@ WORK_DIR="/var/local/kernel-auto-bisect"
 GIT_REPO="$WORK_DIR/git_repo"
 SIGNAL_DIR="$WORK_DIR/signal"
 DUMP_DIR="$WORK_DIR/dump"
+# shellcheck disable=SC2034
 DUMP_LOG_DIR="$WORK_DIR/dump_logs"
 CHECKPOINT_SIGNAL="$SIGNAL_DIR/checkpoint_request"
 RESTORE_FLAG="$SIGNAL_DIR/restore_flag"
+# shellcheck disable=SC2034
 PANIC_SIGNAL="$SIGNAL_DIR/panic_request"
 
 CONFIG_FILE="$BIN_DIR/bisect.conf"
 HANDLER_DIR="$BIN_DIR/handlers"
 LOG_FILE="$WORK_DIR/main.log"
 
+# shellcheck disable=SC2034
 CRIU_LOG_FILE="$WORK_DIR/criu-daemon.log"
+# shellcheck disable=SC2034
 BISECT_SCRIPT="$BIN_DIR/kab.sh"
 
 TESTED_KERNEL=""

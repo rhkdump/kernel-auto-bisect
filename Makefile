@@ -33,7 +33,7 @@ format-check:
 
 static-analysis:
 	@command -v shellcheck >/dev/null 2>&1 || { echo "Error: shellcheck not found. Please install it."; exit 1; }
-	shellcheck -x kab.sh lib.sh handlers/*.sh
+	shellcheck -a -x kab.sh criu-daemon.sh handlers/*.sh
 
 TMT_CONTEXT_ARG := $(shell test -f KAB_TMT_CONTEXT && echo "-c @KAB_TMT_CONTEXT")
 
