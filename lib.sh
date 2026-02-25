@@ -437,7 +437,7 @@ generate_final_report() {
 
 reboot_to_origin_kernel() {
 	set_boot_kernel "$ORIGINAL_KERNEL"
-	run_cmd systemctl reboot
+	reboot_and_wait systemctl reboot
 }
 
 finish() {
