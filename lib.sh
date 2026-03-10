@@ -219,7 +219,11 @@ generate_git_repo_from_package_list() {
 	while read -r _url; do
 		local _str
 		_str=$(basename "$_url")
-		_str=${_str#kernel-core-}
+		if [[ $_str == *kernel-rt-core* ]]; then
+			_str=${_str#kernel-rt-core-}
+		else
+			_str=${_str#kernel-core-}
+		fi
 		local k_rel=${_str%.rpm}
 		run_cmd_in_GIT_REPO bash -c "echo '$_url' >k_url"
 		run_cmd_in_GIT_REPO bash -c "echo '$k_rel' >k_rel"

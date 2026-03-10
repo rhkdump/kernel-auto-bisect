@@ -142,8 +142,13 @@ install_from_rpm() {
 	run_cmd mkdir -p "$rpm_cache_dir"
 	local rpms_to_install=()
 
-	for pkg in kernel-core kernel-modules kernel-modules-core kernel-modules-extra kernel; do
-		local rpm_filename="${pkg}-${release}.rpm"
+	if run_cmd_in_GIT_REPO grep -qs kernel-rt-core k_url; then
+		_kernel_name_prefix=kernel-rt
+	else
+		_kernel_name_prefix=kernel
+	fi
+	for pkg in core modules modules-core modules-extra; do
+		local rpm_filename="${_kernel_name_prefix}-${pkg}-${release}.rpm"
 		local rpm_path="${rpm_cache_dir}/${rpm_filename}"
 		local rpm_url="${base_url}/${rpm_filename}"
 		if ! run_cmd test -f "$rpm_path"; then
@@ -161,4 +166,5 @@ install_from_rpm() {
 
 	if ! run_cmd dnf install -y "${rpms_to_install[@]}" >"/var/log/install.log" 2>&1; then do_abort "RPM install failed."; fi
 	TESTED_KERNEL="$release"
+	[[ $_kernel_name_prefix == kernel-rt ]] && TESTED_KERNEL+=+rt
 }
