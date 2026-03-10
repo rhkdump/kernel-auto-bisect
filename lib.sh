@@ -127,7 +127,11 @@ reboot_and_wait() {
 	WAIT_REMOTE_HOST_DOWN=60
 	WAIT_REMOTE_HOST_UP=300
 
-	[[ -z $KAB_TEST_HOST ]] && do_abort "$KAB_TEST_HOST not set. Something wrong!"
+	if [[ -z $KAB_TEST_HOST ]]; then
+		signal_checkpoint "reboot"
+		return 0
+	fi
+
 	_ssh_opts=(-n -q)
 
 	if [[ -f $KAB_TEST_HOST_SSH_KEY ]]; then
