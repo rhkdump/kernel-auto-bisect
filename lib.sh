@@ -306,7 +306,8 @@ initialize() {
 			log "$GIT_REPO already exists, reuse it"
 		else
 			[[ -n $GIT_REPO_BRANCH ]] && branch_arg=--branch=$GIT_REPO_BRANCH
-			if ! run_cmd git clone "$GIT_REPO_URL" "$branch_arg" $GIT_REPO; then
+			# shellcheck disable=SC2086 # $branch_arg can be empty
+			if ! run_cmd git clone "$GIT_REPO_URL" $branch_arg $GIT_REPO; then
 				do_abort "Failed to clone $GIT_REPO_URL"
 			fi
 		fi
