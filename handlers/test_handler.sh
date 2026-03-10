@@ -99,6 +99,9 @@ run_panic_test() {
 				return 1 # BAD
 			fi
 
+			# We have retries left, so we will fall through to trigger the panic again.
+			RUN_COUNT=$((RUN_COUNT + 1))
+
 			# Test was good, which is inconclusive. Check if we should retry.
 			log "Test run #${RUN_COUNT} was good (inconclusive)."
 			if [ "$RUN_COUNT" -ge "$RUNS_PER_COMMIT" ]; then
@@ -106,8 +109,6 @@ run_panic_test() {
 				return 0 # GOOD
 			fi
 
-			# We have retries left, so we will fall through to trigger the panic again.
-			RUN_COUNT=$((RUN_COUNT + 1))
 			log "Proceeding to run attempt #${RUN_COUNT}."
 		fi
 
