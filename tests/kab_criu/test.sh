@@ -69,7 +69,7 @@ else
 
 	until git bisect log | grep -q "first bad commit" || [[ $wait_time -ge $MAX_WAIT_TIME ]]; do
 		sleep $TMT_SLEEP_MARK
-		wait_time=$((wait_time + TMT_SLEEP_MARK))
+		wait_time=$((wait_time + SLEEP_TIME))
 	done
 	if [[ $wait_time -ge $MAX_WAIT_TIME ]]; then
 		echo "Failed to get 1st bad commit"
