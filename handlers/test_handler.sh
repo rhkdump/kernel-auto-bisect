@@ -42,6 +42,7 @@ cp_file() {
 		_ssh_opts=("-i" "$KAB_TEST_HOST_SSH_KEY" -o IdentitiesOnly=yes)
 	fi
 
+	run_cmd mkdir -p "$(dirname "$1")"
 	scp "${_ssh_opts[@]}" "$1" "$KAB_TEST_HOST":"$1"
 }
 
