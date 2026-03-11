@@ -189,7 +189,7 @@ remove_test_kernel() {
 	fi
 	log "Cleaning up last tested kernel: ${kernel_to_remove}"
 	case "$INSTALL_STRATEGY" in
-	rpm) run_cmd rpm -e "kernel-core-${kernel_to_remove}" >/dev/null 2>&1 || log "Failed to remove kernel RPMs." ;;
+	rpm) run_cmd rpm -e "kernel-core-${kernel_to_remove}" "kernel-modules-${kernel_to_remove}" "kernel-modules-core-${kernel_to_remove}" >/dev/null 2>&1 || log "Failed to remove kernel RPMs." ;;
 	git)
 		run_cmd kernel-install remove "${kernel_to_remove}"
 		run_cmd rm -rf "/lib/modules/${kernel_to_remove}"
