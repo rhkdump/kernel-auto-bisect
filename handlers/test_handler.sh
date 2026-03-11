@@ -86,6 +86,7 @@ run_panic_test() {
 	if ! run_cmd test -f "$REPRODUCER_SCRIPT"; then do_abort "Reproducer script not found."; fi
 
 	RUN_COUNT=0
+	PANIC_OCCURRED=false
 	# This loop will continue as long as tests are inconclusive and we have retries.
 	# For panic mode, each iteration involves a reboot.
 	while true; do
