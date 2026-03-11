@@ -11,7 +11,7 @@ install_kernel_devel() {
 generate_mininal_config() {
 	ORIGINAL_KERNEL_CONFIG=${ORIGINAL_KERNEL/vmlinuz/config}
 	# only build kernel modules that are in-use or included in initramfs
-	lsinitrd "/boot/initramfs-$(uname -r).img" | sed -n -E "s/.*\/([a-zA-Z0-9_-]+).ko.xz/\1/p" | xargs -n 1 modprobe
+	run_cmd lsinitrd "/boot/initramfs-$(run_cmd uname -r).img" "|" sed -n -E '"s/.*\/([a-zA-Z0-9_-]+).ko.xz/\1/p"' "|" xargs -n 1 modprobe
 
 	run_cmd_in_GIT_REPO yes '' '|' make localmodconfig
 	run_cmd_in_GIT_REPO sed -i "/rhel.pem/d" .config

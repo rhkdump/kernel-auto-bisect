@@ -53,5 +53,14 @@ Describe 'kdump-lib'
 			The output should equal "$(three_newlines)"
 			The status should be success
 		End
+
+		It "should handle sed command correctly"
+			_mod_name="e1000"
+			_mod_str="intel/${_mod_name}.ko.xz"
+			When call run_cmd echo "$_mod_str" "|" sed -n -E '"s/.*\/([a-zA-Z0-9_-]+).ko.xz/\1/p"'
+			The output should equal "$_mod_name"
+			The status should be success
+		End
+
 	End
 End
