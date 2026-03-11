@@ -26,7 +26,7 @@ run_test_strategy() {
 
 	log "--- Phase: RUN_TEST on $(run_cmd uname -r) ---"
 	[[ -z $RUNS_PER_COMMIT ]] && RUNS_PER_COMMIT=1
-	run_test
+	_run_test
 }
 
 signal_checkpoint_panic() {
@@ -78,7 +78,7 @@ handler_run_test_setup() {
 	_handler_run_test setup_test
 }
 
-run_test() {
+_run_test() {
 	if ! run_cmd test -f "$REPRODUCER_SCRIPT"; then do_abort "Reproducer script not found."; fi
 
 	RUN_COUNT=1
