@@ -81,6 +81,25 @@ EOF
 			The stdout should include "Found good commit:"
 		End
 
+		It "finds root commit when exponential search overshoots"
+			# Add one more commit so root is at HEAD~5 (unreachable by steps 1,2,4)
+			# Steps: ~1 (bad), ~2 (bad), ~4 (bad), ~8 overshoots -> fallback to root
+			commit_good() {
+				local commit=$1
+				local root_commit
+				root_commit=$(git -C "$GIT_REPO" rev-list --max-parents=0 HEAD)
+				[[ "$commit" == "$root_commit" ]]
+			}
+
+			(cd "$GIT_REPO" && echo "c5" >>file && git commit -am "commit5" -q) >/dev/null 2>&1
+
+			bad_ref=$(git -C "$GIT_REPO" rev-parse HEAD)
+			When call find_good_commit "$bad_ref"
+			The status should be success
+			The output should include "Testing root commit"
+			The output should include "Found good commit"
+		End
+
 		It "aborts when no good commit is found"
 			# Mock commit_good: everything is bad
 			commit_good() { return 1; }
