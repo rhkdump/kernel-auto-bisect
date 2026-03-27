@@ -223,6 +223,60 @@ nvr_to_tag() {
 	echo "kernel-${tag_name}"
 }
 
+# Auto-discover a good commit by exponential search backward from bad_ref.
+# Tests commits at bad_ref~1, ~2, ~4, ~8, ... until one passes commit_good().
+# Sets GOOD_REF on success.
+find_good_commit() {
+	local bad_ref=$1
+	local step=1
+	local candidate
+
+	log "Auto-discovering good commit (exponential search from $bad_ref)..."
+
+	if [[ "$INSTALL_STRATEGY" == "rpm" ]]; then
+		# Find BAD_COMMIT index in _rpm_releases
+		local bad_index=-1
+		for i in "${!_rpm_releases[@]}"; do
+			if [[ "${_rpm_releases[$i]}" == "$BAD_COMMIT" ]]; then
+				bad_index=$i
+				break
+			fi
+		done
+		if [[ $bad_index -lt 0 ]]; then
+			do_abort "BAD_COMMIT '$BAD_COMMIT' not found in RPM list."
+		fi
+
+		while ((bad_index - step >= 0)); do
+			local idx=$((bad_index - step))
+			local release="${_rpm_releases[$idx]}"
+			candidate="${release_commit_map[$release]}"
+			log "Testing RPM release $release (index $idx, step $step)..."
+			if commit_good "$candidate"; then
+				log "Found good release: $release"
+				GOOD_COMMIT="$release"
+				GOOD_REF="$candidate"
+
+				return 0
+			fi
+			step=$((step * 2))
+		done
+	else
+		while candidate=$(run_cmd_in_GIT_REPO git rev-parse "${bad_ref}~${step}" 2>/dev/null); do
+			log "Testing commit ${bad_ref}~${step} ($candidate, step $step)..."
+			if commit_good "$candidate"; then
+				log "Found good commit: $candidate"
+				GOOD_COMMIT="$candidate"
+				GOOD_REF="$candidate"
+
+				return 0
+			fi
+			step=$((step * 2))
+		done
+	fi
+
+	do_abort "Could not find a good commit in the available history. Please set GOOD_COMMIT manually."
+}
+
 # Auto-detect GIT_REPO_URL from NVR dist tag
 detect_git_repo_url() {
 	local nvr=$1
