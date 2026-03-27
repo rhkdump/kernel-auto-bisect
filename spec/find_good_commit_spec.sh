@@ -80,5 +80,64 @@ EOF
 			The stdout should include "Auto-discovering good commit"
 			The stdout should include "Found good commit:"
 		End
+
+		It "aborts when no good commit is found"
+			# Mock commit_good: everything is bad
+			commit_good() { return 1; }
+
+			bad_ref=$(git -C "${SHELLSPEC_WORKDIR}/git_repo" rev-parse HEAD)
+			When run find_good_commit "$bad_ref"
+			The status should be failure
+			The output should include "Could not find a good commit"
+			The output should include "Please set GOOD_COMMIT manually"
+		End
+	End
+
+	Describe "find_good_commit in RPM mode"
+		setup_rpm_find() {
+			GIT_REPO="${SHELLSPEC_WORKDIR}/rpm_find_repo"
+			KAB_TEST_HOST=""
+			INSTALL_STRATEGY="rpm"
+			KERNEL_RPM_LIST="${SHELLSPEC_WORKDIR}/rpm_find_list.txt"
+			cat >"$KERNEL_RPM_LIST" <<'EOF'
+https://example.com/kernel-core-6.16.4-100.fc41.x86_64.rpm
+https://example.com/kernel-core-6.16.5-100.fc41.x86_64.rpm
+https://example.com/kernel-core-6.16.6-100.fc41.x86_64.rpm
+https://example.com/kernel-core-6.16.7-100.fc41.x86_64.rpm
+EOF
+			BAD_COMMIT="6.16.7-100.fc41.x86_64"
+		}
+
+		cleanup_rpm_find() {
+			rm -rf "${SHELLSPEC_WORKDIR}/rpm_find_repo"
+		}
+
+		Before 'setup_rpm_find'
+		After 'cleanup_rpm_find'
+
+		It "finds a good release via exponential search"
+			generate_git_repo_from_package_list
+
+			# Mock commit_good: only 6.16.4 is good (index 0)
+			commit_good() {
+				local commit=$1
+				[[ "$commit" == "${release_commit_map[6.16.4-100.fc41.x86_64]}" ]]
+			}
+
+			bad_ref="${release_commit_map[$BAD_COMMIT]}"
+			When call find_good_commit "$bad_ref"
+			The status should be success
+			The variable GOOD_COMMIT should equal "6.16.4-100.fc41.x86_64"
+			The stdout should include "Found good release: 6.16.4-100.fc41.x86_64"
+		End
+
+		It "aborts when BAD_COMMIT is not in RPM list"
+			generate_git_repo_from_package_list
+			BAD_COMMIT="6.99.0-999.fc41.x86_64"
+			bad_ref="fake_ref"
+			When run find_good_commit "$bad_ref"
+			The status should be failure
+			The output should include "not found in RPM list"
+		End
 	End
 End

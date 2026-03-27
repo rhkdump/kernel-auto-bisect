@@ -255,11 +255,23 @@ find_good_commit() {
 				log "Found good release: $release"
 				GOOD_COMMIT="$release"
 				GOOD_REF="$candidate"
-
 				return 0
 			fi
 			step=$((step * 2))
 		done
+
+		# Exponential search exhausted; test index 0 as last resort
+		if ((bad_index > 0)); then
+			local release="${_rpm_releases[0]}"
+			candidate="${release_commit_map[$release]}"
+			log "Testing RPM release $release (index 0, final check)..."
+			if commit_good "$candidate"; then
+				log "Found good release: $release"
+				GOOD_COMMIT="$release"
+				GOOD_REF="$candidate"
+				return 0
+			fi
+		fi
 	else
 		while candidate=$(run_cmd_in_GIT_REPO git rev-parse "${bad_ref}~${step}" 2>/dev/null); do
 			log "Testing commit ${bad_ref}~${step} ($candidate, step $step)..."
@@ -267,11 +279,26 @@ find_good_commit() {
 				log "Found good commit: $candidate"
 				GOOD_COMMIT="$candidate"
 				GOOD_REF="$candidate"
-
 				return 0
 			fi
 			step=$((step * 2))
 		done
+
+		# Exponential search exhausted; test the root commit as last resort
+		local prev_step=$((step / 2))
+		if ((prev_step > 0)); then
+			# Try to find the oldest commit in the history
+			local root_commit
+			if root_commit=$(run_cmd_in_GIT_REPO git rev-list --max-parents=0 HEAD 2>/dev/null | head -1); then
+				log "Testing root commit $root_commit (final check)..."
+				if commit_good "$root_commit"; then
+					log "Found good commit: $root_commit"
+					GOOD_COMMIT="$root_commit"
+					GOOD_REF="$root_commit"
+					return 0
+				fi
+			fi
+		fi
 	fi
 
 	do_abort "Could not find a good commit in the available history. Please set GOOD_COMMIT manually."
