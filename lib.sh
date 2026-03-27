@@ -102,6 +102,7 @@ signal_checkpoint() {
 }
 
 declare -A release_commit_map
+_rpm_releases=()
 
 # Run a command to reboot/panic the system and wait for the system to be alive
 # again
@@ -192,6 +193,7 @@ generate_git_repo_from_package_list() {
 		run_cmd_in_GIT_REPO bash -c "echo '$k_rel' >k_rel"
 		run_cmd_in_GIT_REPO git commit -m "$k_rel" k_url k_rel >/dev/null
 		release_commit_map[$k_rel]=$(run_cmd_in_GIT_REPO git rev-parse HEAD)
+		_rpm_releases+=("$k_rel")
 	done <"$KERNEL_RPM_LIST"
 }
 
