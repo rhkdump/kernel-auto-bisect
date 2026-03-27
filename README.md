@@ -78,7 +78,7 @@ Edit `/usr/local/bin/kernel-auto-bisect/bisect.conf` after installation.
 | `GIT_REPO_URL` | URL of the kernel git repository to clone |
 | `GIT_REPO_BRANCH` | Branch to clone |
 | `LOCAL_GIT_REPO` | Path to a local Linux git repo (skips cloning when set) |
-| `GOOD_COMMIT` | Git commit hash of the known-good commit |
+| `GOOD_COMMIT` | Git commit hash of the known-good commit (optional; auto-discovered if omitted) |
 | `BAD_COMMIT` | Git commit hash of the known-bad commit |
 | `MAKE_JOBS` | Number of parallel make jobs (defaults to `nproc`) |
 
@@ -88,7 +88,7 @@ Edit `/usr/local/bin/kernel-auto-bisect/bisect.conf` after installation.
 |---|---|
 | `KERNEL_RPM_LIST` | Path to a file listing kernel RPM URLs, one per line (ordered from good to bad) |
 | `RPM_CACHE_DIR` | Directory to cache downloaded RPMs |
-| `GOOD_COMMIT` | Kernel release string of the known-good version (e.g. `5.14.0-162.el9.aarch64`) |
+| `GOOD_COMMIT` | Kernel release string of the known-good version (optional; auto-discovered if omitted) |
 | `BAD_COMMIT` | Kernel release string of the known-bad version |
 
 ### Remote Mode
