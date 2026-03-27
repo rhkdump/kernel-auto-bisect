@@ -506,9 +506,12 @@ initialize() {
 	if [[ "$INSTALL_STRATEGY" == "rpm" ]]; then
 		if [ ! -f "$KERNEL_RPM_LIST" ]; then do_abort "KERNEL_RPM_LIST file not found."; fi
 		generate_git_repo_from_package_list
-		good_ref=${release_commit_map[$GOOD_COMMIT]}
 		bad_ref=${release_commit_map[$BAD_COMMIT]}
-		if [ -z "$good_ref" ] || [ -z "$bad_ref" ]; then do_abort "Could not find GOOD/BAD versions in RPM list."; fi
+		if [ -z "$bad_ref" ]; then do_abort "BAD_COMMIT '$BAD_COMMIT' not found in RPM list."; fi
+		if [[ -n "$GOOD_COMMIT" ]]; then
+			good_ref=${release_commit_map[$GOOD_COMMIT]}
+			if [ -z "$good_ref" ]; then do_abort "GOOD_COMMIT '$GOOD_COMMIT' not found in RPM list."; fi
+		fi
 	elif [[ "$INSTALL_STRATEGY" == "git" ]]; then
 		if [[ -n $LOCAL_GIT_REPO ]] && setup_local_git_repo "$GOOD_COMMIT" "$BAD_COMMIT"; then
 			true
