@@ -537,17 +537,21 @@ initialize() {
 verify_intial_commits() {
 	if [[ "$VERIFY_COMMITS" == "no" ]]; then
 		log "Skipping verifying initial commits"
-		return 0
+	else
+		log "Verifying initial BAD commit"
+		if commit_good "$BAD_REF"; then
+			do_abort "BAD_COMMIT behaved as GOOD"
+		fi
 	fi
 
-	log "Verifying initial GOOD commit"
-	if ! commit_good "$GOOD_REF"; then
-		do_abort "GOOD_COMMIT behaved as BAD"
-	fi
-
-	log "Verifying initial BAD commit"
-	if commit_good "$BAD_REF"; then
-		do_abort "BAD_COMMIT behaved as GOOD"
+	# Auto-discover good commit if not specified (after verifying bad commit)
+	if [[ -z "$GOOD_REF" ]]; then
+		find_good_commit "$BAD_REF"
+	elif [[ "$VERIFY_COMMITS" != "no" ]]; then
+		log "Verifying initial GOOD commit"
+		if ! commit_good "$GOOD_REF"; then
+			do_abort "GOOD_COMMIT behaved as BAD"
+		fi
 	fi
 }
 
