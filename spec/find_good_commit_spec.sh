@@ -140,4 +140,53 @@ EOF
 			The output should include "not found in RPM list"
 		End
 	End
+
+	Describe "verify_intial_commits verifies bad first then good"
+		setup_verify() {
+			VERIFY_COMMITS="yes"
+			GOOD_REF="good_ref_value"
+			BAD_REF="bad_ref_value"
+			_verify_good_called=false
+			_verify_bad_called=false
+		}
+		Before 'setup_verify'
+
+		It "verifies bad commit then good commit"
+			commit_good() {
+				if [[ "$1" == "good_ref_value" ]]; then
+					_verify_good_called=true
+					return 0
+				elif [[ "$1" == "bad_ref_value" ]]; then
+					_verify_bad_called=true
+					return 1
+				fi
+			}
+
+			When call verify_intial_commits
+			The output should include "Verifying initial BAD commit"
+			The output should include "Verifying initial GOOD commit"
+			The variable _verify_good_called should equal "true"
+			The variable _verify_bad_called should equal "true"
+		End
+
+		It "auto-discovers good commit when GOOD_REF is empty"
+			GOOD_REF=""
+			_find_good_commit_called=false
+			commit_good() {
+				if [[ "$1" == "bad_ref_value" ]]; then
+					_verify_bad_called=true
+					return 1
+				fi
+			}
+			find_good_commit() {
+				_find_good_commit_called=true
+			}
+
+			When call verify_intial_commits
+			The output should include "Verifying initial BAD commit"
+			The variable _verify_bad_called should equal "true"
+			The variable _find_good_commit_called should equal "true"
+			The variable _verify_good_called should equal "false"
+		End
+	End
 End
