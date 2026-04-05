@@ -7,6 +7,7 @@ Describe 'remove_test_kernel'
 	setup_env() {
 		LOG_FILE="${SHELLSPEC_WORKDIR}/test.log"
 		ORIGINAL_KERNEL="/boot/vmlinuz-5.14.0-100.el9.x86_64"
+		ORIGINAL_KERNEL_RELEASE="5.14.0-100.el9.x86_64"
 		TESTED_KERNEL=""
 		INSTALL_STRATEGY="git"
 		_commands_run=""
@@ -44,23 +45,19 @@ Describe 'remove_test_kernel'
 	End
 
 	Describe "safety check"
-		It "skips removal when currently running the original kernel"
-			run_cmd() {
-				if [[ "$1" == "uname" && "$2" == "-r" ]]; then
-					echo "5.14.0-100.el9.x86_64"
-					return 0
-				fi
-				return 0
-			}
-			TESTED_KERNEL="5.14.0-200.el9.x86_64"
-			skip_check() {
-				remove_test_kernel
-				echo "tested=$TESTED_KERNEL"
-				echo "cmds=$_commands_run"
-			}
-			When call skip_check
-			The line 1 should equal "tested="
-			The line 2 should equal "cmds="
+		It "skips removal when kernel_to_remove is the original kernel"
+			TESTED_KERNEL="5.14.0-100.el9.x86_64"
+			When call remove_test_kernel
+			The variable TESTED_KERNEL should equal ""
+			The variable _commands_run should equal ""
+		End
+
+		It "skips removal of original kernel even if ORIGINAL_KERNEL path is unusual"
+			ORIGINAL_KERNEL="/boot/boot/vmlinuz-5.14.0-100.el9.x86_64"
+			TESTED_KERNEL="5.14.0-100.el9.x86_64"
+			When call remove_test_kernel
+			The variable TESTED_KERNEL should equal ""
+			The variable _commands_run should equal ""
 		End
 	End
 
