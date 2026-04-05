@@ -163,10 +163,7 @@ prepare_reboot() {
 do_abort() {
 	log "FATAL: $1"
 	log "Aborting bisection."
-	if [[ -n "$ORIGINAL_KERNEL" ]]; then
-		log "Returning to original kernel."
-		set_boot_kernel "$ORIGINAL_KERNEL"
-	fi
+	reboot_to_origin_kernel
 	log "To perform a full cleanup of all intermediate kernels, please do so manually."
 	exit 1
 }
@@ -412,8 +409,14 @@ initialize() {
 
 	good_ref="$GOOD_COMMIT"
 	bad_ref="$BAD_COMMIT"
-	# Store original kernel in memory
-	ORIGINAL_KERNEL=$(get_original_kernel)
+	# Store original kernel in memory so
+	# - it will be restored when bisecting is finished or aborted
+	# - "make localmodconfig" can work in case the running test kernel gets removed
+	if ! ORIGINAL_KERNEL=$(get_original_kernel) || ! run_cmd test -f "$ORIGINAL_KERNEL"; then
+		ORIGINAL_KERNEL=""
+		do_abort "Failed to get original kernel, current running kernel may be removed"
+	fi
+
 	# shellcheck disable=SC2034
 	ORIGINAL_KERNEL_RELEASE=$(run_cmd uname -r)
 
@@ -612,6 +615,10 @@ generate_final_report() {
 }
 
 reboot_to_origin_kernel() {
+	if [[ -z "$ORIGINAL_KERNEL" ]]; then
+		log "Original kernel not set, something wrong"
+		return
+	fi
 	set_boot_kernel "$ORIGINAL_KERNEL"
 	reboot_and_wait systemctl reboot
 }

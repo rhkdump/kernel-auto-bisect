@@ -19,7 +19,9 @@ generate_mininal_config() {
 	run_cmd_in_GIT_REPO rm -f .config
 	if ! run_cmd_in_GIT_REPO yes '' '|' make localmodconfig; then
 		log "Failed to run 'make localmodconfig, will try $ORIGINAL_KERNEL_CONFIG"
-		# The test kernel may be removed. As a result "make localconfig" won't work
+		# The test kernel may be removed. As a result, "make localmodconfig"
+		# may not work. "make localmodconfig" will need to find a base config
+		# in the order of .config, /proc/config.gz ...
 		run_cmd_in_GIT_REPO cp "$ORIGINAL_KERNEL_CONFIG" ".config"
 		if ! run_cmd_in_GIT_REPO yes '' '|' make localmodconfig; then
 			do_abort "Failed to run 'make localmodconfig' for the 2nd time"
