@@ -7,6 +7,9 @@
 # shellcheck source=lib.sh
 source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/lib.sh"
 
+# Reboot to original kernel so kab can be restarted safely
+trap 'ret=$?; reboot_to_origin_kernel; exit $ret' SIGINT
+
 do_start() {
 	initialize
 	verify_intial_commits
