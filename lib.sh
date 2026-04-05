@@ -429,22 +429,23 @@ setup_kdump() {
 			fi
 		fi
 
+		# - Assumme the system always have >=2G RAM
+		# - Run the command unconditonally to address cases like the
+		#   to-be-installed kernel is already installed but without
+		#   crashkernel set
+		run_cmd kdumpctl reset-crashkernel --kernel=ALL
+
 		if ! run_cmd grep -q "crashkernel" /proc/cmdline; then
 			log "Setting up crashkernel via kdumpctl reset-crashkernel"
-			# Assuming the system always have >=2G RAM
-			run_cmd kdumpctl reset-crashkernel --kernel=ALL
 
-			# crashkernel will only be set automatically for a newly installed
-			# kernel if kdump.service is enabled
-			if ! run_cmd systemctl enable kdump; then
-				do_abort "KERNEL_RPM_LIST file not found."
-			fi
 			# kexec reboot by default inherit /proc/cmdline. So make sure
 			# crashkernel exists in /proc/cmdline
 			reboot_and_wait systemctl reboot
-		else
-			# Ensure kdump is running if crashkernel is already present
-			run_cmd systemctl enable --now kdump
+		fi
+		# crashkernel will only be set automatically for a newly installed
+		# kernel if kdump.service is enabled
+		if ! run_cmd systemctl enable kdump; then
+			do_abort "kdump.service can't be enabled"
 		fi
 	fi
 }
