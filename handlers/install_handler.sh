@@ -49,8 +49,8 @@ remove_test_kernel() {
 	if [[ -z "$kernel_to_remove" ]]; then return; fi
 
 	# Safety check: never remove the original kernel
-	if [[ "/boot/vmlinuz-$(run_cmd uname -r)" == "$ORIGINAL_KERNEL" ]]; then
-		log "WARNING: Skipping removal of test kernel, as it is the original kernel or undefined."
+	if [[ "$kernel_to_remove" == "$ORIGINAL_KERNEL_RELEASE" ]]; then
+		log "WARNING: Skipping removal of original kernel: ${kernel_to_remove}"
 		TESTED_KERNEL=""
 		return
 	fi
