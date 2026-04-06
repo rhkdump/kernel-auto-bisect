@@ -1,0 +1,36 @@
+name: KAB tests
+
+on: pull_request
+
+jobs:
+  basic-tests:
+    runs-on: ubuntu-latest
+    container: docker.io/fedora:latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Format Check
+        run: |
+          dnf install make shfmt -yq
+          make format-check
+
+      - name: Static Analysis
+        run: |
+          dnf install shellcheck -yq
+          make static-analysis
+
+      - name: Unit Tests
+        run: |
+          curl -L -O https://github.com/shellspec/shellspec/archive/latest.tar.gz && tar -xzf latest.tar.gz
+          cd shellspec-latest && sudo make install
+          cd ..
+          make unit-tests
+
+  integration-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Schedule test on Testing Farm
+        uses: sclorg/testing-farm-as-github-action@v4
+        with:
+          api_key: ${{ secrets.TF_API_KEY }}
