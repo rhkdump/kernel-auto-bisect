@@ -1,0 +1,46 @@
+name: KAB tests
+
+on:
+  pull_request:
+  # integration tests need secrets from environment for forked progject
+  pull_request_target:
+
+jobs:
+  basic-tests:
+    runs-on: ubuntu-latest
+    container: docker.io/fedora:latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Format Check
+        run: |
+          dnf install make shfmt -yq
+          make format-check
+
+      - name: Static Analysis
+        run: |
+          dnf install shellcheck -yq
+          make static-analysis
+
+      - name: Unit Tests
+        run: |
+          dnf install git -yq
+          curl -L -O https://github.com/shellspec/shellspec/archive/latest.tar.gz && tar -xzf latest.tar.gz
+          cd shellspec-latest && sudo make install
+          cd ..
+          make unit-tests
+
+  integration-tests:
+    runs-on: ubuntu-latest
+    environment: testing_farm
+    if: github.event_name == 'pull_request_target'
+    steps:
+      - name: Schedule tests on Testing Farm
+        uses: sclorg/testing-farm-as-github-action@v4
+        with:
+          api_key: ${{ secrets.TF_API_KEY }}
+          compose: Fedora-43
+          # Avoid using xen guests as some machines don't support kdump
+          tmt_hardware: '{"virtualization.hypervisor": "!= xen"}'
+          pipeline_settings: '{"type": "tmt-multihost"}'
