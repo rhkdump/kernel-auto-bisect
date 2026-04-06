@@ -44,3 +44,4 @@ jobs:
           # Avoid using xen guests as some machines don't support kdump
           tmt_hardware: '{"virtualization.hypervisor": "!= xen"}'
           pipeline_settings: '{"type": "tmt-multihost"}'
+          tmt_context: "trigger=GitHub_Action"

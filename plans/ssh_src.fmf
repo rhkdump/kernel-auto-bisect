@@ -27,3 +27,10 @@ adjust:
          - name: server
            how: connect
            guest: $@KAB_SERVER_IP_SRC
+
+
+    # Currently, testing farm doesn't support run the test with specified user name
+    - when: trigger == GitHub_Action
+      provision:
+         - name: client
+         - name: server
