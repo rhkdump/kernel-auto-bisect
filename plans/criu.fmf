@@ -4,15 +4,6 @@ discover:
     test:
      - /tests/kab_criu
 
-provision:
-   - name: client
-     how: virtual
-     connection: system
-
-   - name: server
-     how: virtual
-     connection: system
-
 adjust:
     provision:
        - name: client
