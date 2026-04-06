@@ -2,7 +2,11 @@
 #
 # kab.sh:  kernel-auto-bisect (kab)
 #
-# Uses CRIU (Checkpoint Restore in Userspace) to restore the process for reboot or kernel panic
+# - When it runs on two hosts, the orchestrater will run on one host and
+#   building, installing and testing kernel will on the other host
+#
+# - When it runs on a single host, it ses CRIU (Checkpoint Restore in
+#   Userspace) to restore the process for reboot or kernel panic
 #
 # shellcheck source=lib.sh
 source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/lib.sh"
