@@ -22,6 +22,7 @@ jobs:
 
       - name: Unit Tests
         run: |
+          dnf install git -yq
           curl -L -O https://github.com/shellspec/shellspec/archive/latest.tar.gz && tar -xzf latest.tar.gz
           cd shellspec-latest && sudo make install
           cd ..
@@ -34,3 +35,7 @@ jobs:
         uses: sclorg/testing-farm-as-github-action@v4
         with:
           api_key: ${{ secrets.TF_API_KEY }}
+          compose: Fedora-43
+          # Avoid using xen guests as some machines don't support kdump
+          tmt_hardware: '{"virtualization.hypervisor": "!= xen"}'
+          pipeline_settings: '{"type": "tmt-multihost"}'
