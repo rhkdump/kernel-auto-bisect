@@ -211,7 +211,7 @@ install_from_rpm() {
 		fi
 	done
 
-	if ! run_cmd dnf install -y "${rpms_to_install[@]}" >"/var/log/install.log" 2>&1; then do_abort "RPM install failed."; fi
+	if ! run_cmd dnf install -y "${rpms_to_install[@]}" ">/var/log/install.log" '2>&1'; then do_abort "RPM install failed."; fi
 	TESTED_KERNEL="$release"
 	[[ $_kernel_name_prefix == kernel-rt ]] && TESTED_KERNEL+=+rt
 }
