@@ -155,6 +155,34 @@ reboot_and_wait() {
 	done
 }
 
+kexec_load_kernel() {
+	local kernel_release="$1"
+	local vmlinuz="/boot/vmlinuz-${kernel_release}"
+	local initramfs="/boot/initramfs-${kernel_release}.img"
+	local cmdline
+
+	if ! run_cmd test -f "$vmlinuz"; then
+		log "ERROR: Kernel not found: $vmlinuz"
+		return 1
+	fi
+	if ! run_cmd test -f "$initramfs"; then
+		log "ERROR: Initramfs not found: $initramfs"
+		return 1
+	fi
+
+	cmdline=$(run_cmd cat /proc/cmdline)
+	log "Loading kernel ${kernel_release} into kexec"
+	if ! run_cmd kexec -l "$vmlinuz" --initrd="$initramfs" --append="$cmdline"; then
+		log "ERROR: Failed to load kernel into kexec"
+		return 1
+	fi
+	log "Kernel loaded into kexec successfully"
+}
+
+kab_kexec() {
+	reboot_and_wait kexec -e
+}
+
 prepare_reboot() {
 	# try to reboot to current EFI bootloader entry next time
 	run_cmd command -v rstrnt-prepare-reboot &>/dev/null && run_cmd rstrnt-prepare-reboot >/dev/null

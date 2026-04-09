@@ -33,8 +33,17 @@ do_full_reboot() {
 }
 
 do_kexec_reboot() {
-	log "Strategy: kexec not supported with CRIU checkpointing, using full reboot..."
-	# kexec bypasses the normal boot process, which would prevent the CRIU daemon
-	# from properly restoring the process. Fall back to full reboot.
-	do_full_reboot
+	if [[ -z $KAB_TEST_HOST ]]; then
+		log "Strategy: kexec not supported with CRIU checkpointing, using full reboot..."
+		do_full_reboot
+		return
+	fi
+
+	log "Strategy: Performing kexec reboot (fast reboot)"
+	if ! kexec_load_kernel "$TESTED_KERNEL"; then
+		log "Falling back to full reboot"
+		kab_reboot
+		return
+	fi
+	kab_kexec
 }
