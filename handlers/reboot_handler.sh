@@ -33,16 +33,10 @@ do_full_reboot() {
 }
 
 do_kexec_reboot() {
-	if [[ -z $KAB_TEST_HOST ]]; then
-		log "Strategy: kexec not supported with CRIU checkpointing, using full reboot..."
-		do_full_reboot
-		return
-	fi
-
 	log "Strategy: Performing kexec reboot (fast reboot)"
 	if ! kexec_load_kernel "$TESTED_KERNEL"; then
 		log "Falling back to full reboot"
-		kab_reboot
+		do_full_reboot
 		return
 	fi
 	kab_kexec
