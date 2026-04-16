@@ -83,6 +83,8 @@ signal_checkpoint() {
 		printf "sync\n %s" "${_reboot_cmd}" >"$CHECKPOINT_SIGNAL"
 	elif [[ $1 == panic ]]; then
 		printf "sync\n echo 1 > /proc/sys/kernel/sysrq\n echo c > /proc/sysrq-trigger" >"$CHECKPOINT_SIGNAL"
+	elif [[ $1 == kexec ]]; then
+		printf "sync\n kexec -e" >"$CHECKPOINT_SIGNAL"
 	fi
 
 	# Wait for the daemon to process our request and reboot/panic the system
@@ -159,7 +161,6 @@ kexec_load_kernel() {
 	local kernel_release="$1"
 	local vmlinuz="/boot/vmlinuz-${kernel_release}"
 	local initramfs="/boot/initramfs-${kernel_release}.img"
-	local cmdline
 
 	if ! run_cmd test -f "$vmlinuz"; then
 		log "ERROR: Kernel not found: $vmlinuz"
@@ -170,9 +171,8 @@ kexec_load_kernel() {
 		return 1
 	fi
 
-	cmdline=$(run_cmd cat /proc/cmdline)
 	log "Loading kernel ${kernel_release} into kexec"
-	if ! run_cmd kexec -l "$vmlinuz" --initrd="$initramfs" --append="$cmdline"; then
+	if ! run_cmd kexec -l "$vmlinuz" --initrd="$initramfs" --reuse-cmdline; then
 		log "ERROR: Failed to load kernel into kexec"
 		return 1
 	fi
@@ -180,7 +180,11 @@ kexec_load_kernel() {
 }
 
 kab_kexec() {
-	reboot_and_wait kexec -e
+	if [[ -z $KAB_TEST_HOST ]]; then
+		signal_checkpoint "kexec"
+	else
+		reboot_and_wait kexec -e
+	fi
 }
 
 prepare_reboot() {
