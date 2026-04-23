@@ -453,6 +453,15 @@ END
 }
 
 setup_kdump() {
+	if [[ "$REBOOT_STRATEGY" == "kexec" ]]; then
+		if ! run_cmd command -v kexec &>/dev/null; then
+			if ! run_cmd dnf install kexec-tools -yq; then
+				log "Failed to install kexec-tools!"
+				exit 1
+			fi
+		fi
+	fi
+
 	if [[ "$TEST_STRATEGY" == "panic" ]]; then
 		if ! run_cmd command -v kdumpctl &>/dev/null; then
 			if ! run_cmd dnf install kdump-utils -yq && ! run_cmd dnf install kexec-tools -yq; then
