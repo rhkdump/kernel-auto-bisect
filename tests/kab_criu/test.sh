@@ -52,7 +52,7 @@ done
 cat <<END | ssh_cmd "cat >$CONF_FILE"
 INSTALL_STRATEGY="rpm"
 TEST_STRATEGY="panic"
-REBOOT_STRATEGY=
+REBOOT_STRATEGY="kexec"
 RPM_CACHE_DIR="/var/cache/kdump-bisect-rpms"
 BAD_COMMIT=$BAD_COMMIT
 REPRODUCER_SCRIPT=$TEST_SCRIPT
