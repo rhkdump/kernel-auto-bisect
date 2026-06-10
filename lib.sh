@@ -84,7 +84,7 @@ signal_checkpoint() {
 	elif [[ $1 == panic ]]; then
 		printf "sync\n echo 1 > /proc/sys/kernel/sysrq\n echo c > /proc/sysrq-trigger" >"$CHECKPOINT_SIGNAL"
 	elif [[ $1 == kexec ]]; then
-		printf "sync\n kexec -e" >"$CHECKPOINT_SIGNAL"
+		printf "sync\n systemctl kexec" >"$CHECKPOINT_SIGNAL"
 	fi
 
 	# Wait for the daemon to process our request and reboot/panic the system
@@ -183,7 +183,7 @@ kab_kexec() {
 	if [[ -z $KAB_TEST_HOST ]]; then
 		signal_checkpoint "kexec"
 	else
-		reboot_and_wait kexec -e
+		reboot_and_wait systemctl kexec
 	fi
 }
 
