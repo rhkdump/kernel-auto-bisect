@@ -100,7 +100,7 @@ handle_checkpoint() {
 	rm -f "$CHECKPOINT_SIGNAL"
 
 	log "Received checkpoint+panic request"
-	if ! grep -e sysrq-trigger -e reboot -e 'kexec -e' "$_cmd_file"; then
+	if ! grep -e sysrq-trigger -e reboot -e 'systemctl kexec' "$_cmd_file"; then
 		return 1
 	fi
 	if do_checkpoint; then
