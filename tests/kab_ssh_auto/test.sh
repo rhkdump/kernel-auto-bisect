@@ -1,6 +1,5 @@
 #!/bin/bash
 # vim: dict+=/usr/share/beakerlib/dictionary.vim cpt=.,w,b,u,t,i,k
-set -x
 
 . ../test_lib.sh
 
@@ -72,7 +71,7 @@ on_test() {
 }
 END
 
-	bash -x $KAB_SCRIPT </dev/null &>"$XTRACE_LOG"
+	bash -x $KAB_SCRIPT </dev/null 2>"$XTRACE_LOG"
 
 	if [[ -f "$SERVER_SSH_KEY" ]]; then
 		ssh_cmd="ssh -o IdentitiesOnly=yes -i $SERVER_SSH_KEY"
