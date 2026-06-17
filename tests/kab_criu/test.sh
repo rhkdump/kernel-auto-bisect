@@ -1,7 +1,5 @@
 #!/bin/bash
 # vim: dict+=/usr/share/beakerlib/dictionary.vim cpt=.,w,b,u,t,i,k
-set -x
-
 . ../test_lib.sh
 
 [[ -z $ARCH ]] && ARCH=$(uname -m)
@@ -99,18 +97,27 @@ fi
 # 3. Wait for result
 MAX_WAIT_TIME=600 # 10 minutes
 wait_time=0
+MAIN_LOG_REMOTE=/var/local/kernel-auto-bisect/main.log
+MAIN_LOG_LOCAL=/tmp/kab-main.log
+printed_lines=0
+
 while [[ $wait_time -lt $MAX_WAIT_TIME ]]; do
 	# Try to check if finished
-	output=$(ssh_cmd "git -C $GIT_REPO bisect log | grep 'first bad commit' | grep -q '$BAD_COMMIT'")
+	output=$(ssh_cmd "git -C $GIT_REPO bisect log 2>/dev/null | grep 'first bad commit' | grep -q '$BAD_COMMIT'")
 	ret=$?
 
 	if [[ $ret -eq 0 ]]; then
 		copy_xtrace_log
 		exit 0
-	else
-		echo "Target ($TARGET_HOST) is down or unreachable (exit code: $ret), waiting..."
 	fi
 
+	# Rsync the remote log and print only new lines
+	rsync -a "${ssh_opts[@]}" "${TARGET_HOST}:${MAIN_LOG_REMOTE}" "$MAIN_LOG_LOCAL" 2>/dev/null
+	current_total=$(wc -l <"$MAIN_LOG_LOCAL" 2>/dev/null || echo 0)
+	if [[ $current_total -gt $printed_lines ]]; then
+		tail -n +$((printed_lines + 1)) "$MAIN_LOG_LOCAL"
+		printed_lines=$current_total
+	fi
 	sleep 10
 	wait_time=$((wait_time + 10))
 done
