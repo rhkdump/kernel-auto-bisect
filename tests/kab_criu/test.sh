@@ -17,8 +17,7 @@ fi
 
 TARGET_HOST="${SERVERS}"
 
-TMT_TEST_PLAN_ROOT=${TMT_PLAN_DATA%data}
-SERVER_SSH_KEY=${TMT_TEST_PLAN_ROOT}/provision/server/id_ecdsa
+SERVER_SSH_KEY=$TMT_TREE/tests/ssh_keys/id_ecdsa
 
 # ssh_cmd wrapper to handle local and remote execution
 ssh_cmd() {

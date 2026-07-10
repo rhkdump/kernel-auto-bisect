@@ -1,0 +1,20 @@
+name: KAB integration tests
+
+on:
+  # integration tests need secrets from environment for forked progject
+  pull_request_target:
+
+jobs:
+  integration-tests:
+    runs-on: ubuntu-latest
+    environment: testing_farm
+    steps:
+      - name: Schedule tests on Testing Farm
+        uses: sclorg/testing-farm-as-github-action@v4
+        with:
+          api_key: ${{ secrets.TF_API_KEY }}
+          compose: Fedora-43
+          # Avoid using xen guests as some machines don't support kdump
+          tmt_hardware: '{"virtualization.hypervisor": "!= xen"}'
+          pipeline_settings: '{"type": "tmt-multihost"}'
+          tmt_context: 'trigger=GitHub_Action;'

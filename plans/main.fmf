@@ -1,2 +1,6 @@
+provision:
+   - name: client
+   - name: server
+
 execute:
     how: tmt

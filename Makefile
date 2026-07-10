@@ -40,9 +40,10 @@ unit-tests:
 	shellspec
 
 TMT_CONTEXT_ARG := $(shell test -f KAB_TMT_CONTEXT && echo "-c @KAB_TMT_CONTEXT")
+TMT_PROVISION_VIRTUAL_ARG := $(shell test -f KAB_TMT_CONTEXT || echo "provision -h virtual -c system")
 
 integration-tests:
-	tmt $(TMT_CONTEXT_ARG) run -a
+	tmt $(TMT_CONTEXT_ARG) run $(TMT_PROVISION_VIRTUAL_ARG)
 
 tests: format-check static-analysis unit-tests integration-tests
 

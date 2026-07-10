@@ -1,17 +1,12 @@
 discover:
+  - name: set up ssh access from client to server
+    how: fmf
+    test:
+     - /tests/setup_ssh_client_to_server
   - name: kab on a single machine (CRIU)
     how: fmf
     test:
      - /tests/kab_criu
-
-provision:
-   - name: client
-     how: virtual
-     connection: system
-
-   - name: server
-     how: virtual
-     connection: system
 
 adjust:
     provision:
