@@ -1,8 +1,7 @@
 #!/bin/bash
 # vim: dict+=/usr/share/beakerlib/dictionary.vim cpt=.,w,b,u,t,i,k
-set -x
 
-. ./tmt.sh
+. ../test_lib.sh
 
 [[ -z $ARCH ]] && ARCH=$(uname -m)
 
@@ -16,7 +15,7 @@ if echo "${CLIENTS}" | grep -qi "${HOSTNAME}"; then
 	KERNEL_RPM_LIST=/usr/local/bin/kernel-auto-bisect/kernel_list
 	WORK_DIR=/var/local/kernel-auto-bisect
 	GIT_REPO=$WORK_DIR/git_repo
-	GOOD_COMMIT=6.19.5-300.fc44.${ARCH}
+	GOOD_COMMIT=6.19.2-300.fc44.${ARCH}
 	BAD_COMMIT=6.19.8-200.fc43.${ARCH}
 
 	TMT_TEST_PLAN_ROOT=${TMT_PLAN_DATA%data}
@@ -50,7 +49,7 @@ END
 	fi
 
 	cat <<END >$KERNEL_RPM_LIST
-https://kojipkgs.fedoraproject.org/packages/kernel/6.19.5/300.fc44/${ARCH}/kernel-core-6.19.5-300.fc44.${ARCH}.rpm
+https://kojipkgs.fedoraproject.org/packages/kernel/6.19.2/300.fc44/${ARCH}/kernel-core-6.19.2-300.fc44.${ARCH}.rpm
 https://kojipkgs.fedoraproject.org/packages/kernel/6.19.6/200.fc43/${ARCH}/kernel-core-6.19.6-200.fc43.${ARCH}.rpm
 https://kojipkgs.fedoraproject.org/packages/kernel/6.19.7/200.fc43/${ARCH}/kernel-core-6.19.7-200.fc43.${ARCH}.rpm
 https://kojipkgs.fedoraproject.org/packages/kernel/6.19.8/200.fc43/${ARCH}/kernel-core-6.19.8-200.fc43.${ARCH}.rpm
@@ -72,7 +71,7 @@ on_test() {
 }
 END
 
-	bash -x $KAB_SCRIPT </dev/null &>/root/test.log
+	bash -x $KAB_SCRIPT </dev/null 2>"$XTRACE_LOG"
 
 	if [[ -f "$SERVER_SSH_KEY" ]]; then
 		ssh_cmd="ssh -o IdentitiesOnly=yes -i $SERVER_SSH_KEY"

@@ -1,0 +1,50 @@
+name: KAB tmt e2e tests
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  # ── Full e2e tests  ────
+  #
+  # Uses GitHub-hosted runners with nested KVM. Each plan provisions
+  # two Fedora VMs via testcloud and runs the bisection end-to-end.
+  #
+  tmt-run:
+    runs-on: ubuntu-latest
+    container:
+      image: quay.io/fedora/fedora:latest
+      options: "--privileged -v /dev:/dev --volume /sys/fs/cgroup:/sys/fs/cgroup:rw --cgroupns=host"
+    strategy:
+      fail-fast: false
+      matrix:
+        plan: [ssh, ssh_src, ssh_auto, criu]
+    timeout-minutes: 480
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Install tmt and start libvirtd
+        run: |
+          dnf install tmt+provision-virtual -yq
+          virtlogd -d
+          libvirtd -d
+          # verify KVM is available
+          test -e /dev/kvm && echo "KVM OK" || echo "WARNING: /dev/kvm missing"
+          virsh list --all
+
+
+      - name: Run e2e test (${{ matrix.plan }})
+        run: |
+          # "-B finish" to skip shutting down KVM guests thus to bypass "libvirt:  error : Failed to terminate process with SIGKILL: Device or resource busy" e.g.
+          # https://github.com/coiby/kernel-auto-bisect/actions/runs/27753332468/job/82108959294
+          tmt run -B finish provision -h virtual -c system -i fedora:43 execute -vvv plans --name '/plans/${{ matrix.plan }}$'
+
+      - name: Upload tmt artifacts
+        uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: tmt-run-${{ matrix.plan }}
+          path: /var/tmp/tmt/run*
+          if-no-files-found: ignore

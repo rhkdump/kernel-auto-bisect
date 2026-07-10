@@ -1,8 +1,6 @@
 #!/bin/bash
 # vim: dict+=/usr/share/beakerlib/dictionary.vim cpt=.,w,b,u,t,i,k
-set -x
-
-. ./tmt.sh
+. ../test_lib.sh
 
 [[ -z $ARCH ]] && ARCH=$(uname -m)
 
@@ -20,14 +18,20 @@ TARGET_HOST="${SERVERS}"
 TMT_TEST_PLAN_ROOT=${TMT_PLAN_DATA%data}
 SERVER_SSH_KEY=${TMT_TEST_PLAN_ROOT}/provision/server/id_ecdsa
 
+ssh_opts=(-o StrictHostKeyChecking=accept-new -o ConnectTimeout=10 -o ChannelTimeout=session=2s)
+
+if [[ -f "$SERVER_SSH_KEY" ]]; then
+	ssh_opts+=(-o IdentitiesOnly=yes -i "$SERVER_SSH_KEY")
+fi
+
 # ssh_cmd wrapper to handle local and remote execution
 ssh_cmd() {
-	local _opts="-o StrictHostKeyChecking=accept-new -o ConnectTimeout=10"
-	if [[ -f "$SERVER_SSH_KEY" ]]; then
-		_opts="$_opts -o IdentitiesOnly=yes -i $SERVER_SSH_KEY"
-	fi
-	ssh $_opts "$TARGET_HOST" "$@"
+	ssh "${ssh_opts[@]}" "$TARGET_HOST" "$@"
 	return $?
+}
+
+copy_xtrace_log() {
+	scp "${ssh_opts[@]}" "${TARGET_HOST}:${XTRACE_LOG}" "$XTRACE_LOG"
 }
 
 if ! ssh_cmd "cd $TMT_TREE && make install"; then
@@ -83,29 +87,42 @@ END
 
 # For idempotence
 ssh_cmd "rm -rf $GIT_REPO"
+
 # 2. Start kab.sh on Target if not already running and no checkpoint exists
 if ! ssh_cmd "pgrep -f $KAB_SCRIPT" >/dev/null 2>&1 && ! ssh_cmd "ls /var/local/kernel-auto-bisect/dump/core-*.img" >/dev/null 2>&1; then
 	echo "Starting kab.sh..."
-	ssh_cmd "setsid bash -x $KAB_SCRIPT </dev/null &>/root/test.log &"
+	ssh_cmd "setsid bash -x $KAB_SCRIPT </dev/null &>$XTRACE_LOG &"
 fi
 
 # 3. Wait for result
 MAX_WAIT_TIME=600 # 10 minutes
 wait_time=0
+MAIN_LOG_REMOTE=/var/local/kernel-auto-bisect/main.log
+MAIN_LOG_LOCAL=/tmp/kab-main.log
+touch "$MAIN_LOG_LOCAL"
+printed_lines=0
+
 while [[ $wait_time -lt $MAX_WAIT_TIME ]]; do
 	# Try to check if finished
-	output=$(ssh_cmd "git -C $GIT_REPO bisect log | grep 'first bad commit' | grep -q '$BAD_COMMIT'")
+	output=$(ssh_cmd "git -C $GIT_REPO bisect log 2>/dev/null | grep 'first bad commit' | grep -q '$BAD_COMMIT'")
 	ret=$?
 
 	if [[ $ret -eq 0 ]]; then
+		copy_xtrace_log
 		exit 0
-	else
-		echo "Target ($TARGET_HOST) is down or unreachable (exit code: $ret), waiting..."
 	fi
 
+	# Rsync the remote log and print only new lines
+	rsync --timeout=20 -e "ssh ${ssh_opts[*]}" "${TARGET_HOST}:${MAIN_LOG_REMOTE}" "$MAIN_LOG_LOCAL" 2>/dev/null
+	current_total=$(wc -l <"$MAIN_LOG_LOCAL" 2>/dev/null || echo 0)
+	if [[ $current_total -gt $printed_lines ]]; then
+		tail -n +$((printed_lines + 1)) "$MAIN_LOG_LOCAL"
+		printed_lines=$current_total
+	fi
 	sleep 10
 	wait_time=$((wait_time + 10))
 done
 
+copy_xtrace_log
 echo "Failed to get 1st bad commit within $MAX_WAIT_TIME seconds"
 exit 1

@@ -49,9 +49,21 @@ Describe 'kdump-lib'
 				#|
 				#|
 			}
+
+			is_sigpipe_ignored() {
+				trap -p SIGPIPE | grep -q "''"
+			}
+
 			When call run_cmd yes '' "|" head -3
 			The output should equal "$(three_newlines)"
 			The status should be success
+			# When running inside a git hook (where Git somehow ignores SIGPIPE),
+			# 'yes' writes a 'Broken pipe' message to stderr instead
+			# of terminating silently. We assert on the error stream to
+			# suppress ShellSpec warnings.
+			if is_sigpipe_ignored; then
+				The error should be defined
+			fi
 		End
 
 		It "should handle sed command correctly"

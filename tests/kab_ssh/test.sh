@@ -1,8 +1,7 @@
 #!/bin/bash
 # vim: dict+=/usr/share/beakerlib/dictionary.vim cpt=.,w,b,u,t,i,k
-set -x
 
-. ./tmt.sh
+. ../test_lib.sh
 
 [[ -z $ARCH ]] && ARCH=$(uname -m)
 
@@ -62,7 +61,7 @@ on_test() {
 }
 END
 
-	bash -x $KAB_SCRIPT </dev/null &>/root/test.log
+	bash -x $KAB_SCRIPT </dev/null 2>"$XTRACE_LOG"
 	GIT_REPO=/var/local/kernel-auto-bisect/git_repo
 	MAX_WAIT_TIME=600
 	wait_time=0

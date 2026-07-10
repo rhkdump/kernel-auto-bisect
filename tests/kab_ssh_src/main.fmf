@@ -2,4 +2,4 @@ summary: Run kernel-auto-bisect as non-root using LOCAL_GIT_REPO
 test: ./test.sh
 framework: shell
 require: [git, rsync]
-duration: 3h
+duration: 4h

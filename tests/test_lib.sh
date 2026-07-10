@@ -1,4 +1,10 @@
 #!/bin/bash
+if [[ -z $TMT_PLAN_DATA ]]; then
+    echo "TMT_PLAN_DATA not defined"
+    exit 1
+fi
+XTRACE_LOG="${TMT_PLAN_DATA}/test.log"
+
 assign_server_roles() {
 	if [ -n "${TMT_TOPOLOGY_BASH}" ] && [ -f "${TMT_TOPOLOGY_BASH}" ]; then
 		# assign roles based on tmt topology data
